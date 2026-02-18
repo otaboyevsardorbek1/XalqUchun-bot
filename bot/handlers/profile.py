@@ -10,6 +10,7 @@ from config import ADMIN_IDS
 from db.database import AsyncSessionLocal
 from db.models import User
 from keyboards.main import main_menu
+from utils.referral import get_user_by_tid
 
 router = Router()
 
@@ -17,7 +18,6 @@ class ProfileState(StatesGroup):
     waiting_for_new_phone = State()
 
 def validate_uz_phone(phone: str) -> bool:
-    # Accept formats: +998901234567, 998901234567, 901234567
     cleaned = re.sub(r'[^\d+]', '', phone)
     if cleaned.startswith('+998') and len(cleaned) == 13:
         return True
@@ -42,8 +42,7 @@ async def cmd_profile(message: types.Message):
         await message.answer(f"Admin profilingiz:\nID: {user_id}\nIsm: {message.from_user.full_name}")
         return
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User).where(User.telegram_id == user_id))
-        user = result.scalar_one_or_none()
+        user = await get_user_by_tid(session, user_id)
         if not user:
             await message.answer("Siz roʻyxatdan oʻtmagan. /start ni bosing.")
             return
@@ -99,8 +98,7 @@ async def update_phone_text(message: types.Message, state: FSMContext):
 
 async def update_user_phone(telegram_id: int, phone: str):
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User).where(User.telegram_id == telegram_id))
-        user = result.scalar_one_or_none()
+        user = await get_user_by_tid(session, telegram_id)
         if user:
             user.phone = phone
             await session.commit()

@@ -6,18 +6,16 @@ from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
 from sqlalchemy import select, func
-from datetime import datetime
 
 from db.database import AsyncSessionLocal
 from db.models import User, Transaction
 from utils.referral import (
-    add_user, get_children, count_downline, build_tree_text,
+    get_children, count_downline, build_tree_text,
     create_withdraw_request, list_user_transactions, list_pending_withdrawals,
     process_withdraw, manual_payout, get_user_by_tid
 )
 from config import ALL_OWNER_IDS, MAX_TREE_DEPTH, OWNER_ID
 
-# Try to import graphviz
 try:
     from graphviz import Digraph
     GRAPHVIZ_AVAILABLE = True
@@ -26,37 +24,7 @@ except ImportError:
 
 router = Router()
 
-# ------------------- Public referral commands -------------------
-@router.message(Command("start"))
-async def cmd_start(message: types.Message):
-    args = message.text.split()
-    ref = None
-    if len(args) > 1 and args[1].isdigit():
-        ref = int(args[1])
-    created = await add_user(
-        message.from_user.id,
-        message.from_user.username,
-        message.from_user.full_name,
-        ref
-    )
-    bot_username = (await message.bot.get_me()).username
-    ref_link = f"https://t.me/{bot_username}?start={message.from_user.id}"
-    if not created:
-        await message.reply(f"Siz allaqachon ro'yxatdasiz.\nSizning referal link: {ref_link}")
-    else:
-        await message.reply(
-            f"🎉 Salom, {message.from_user.full_name}!\n"
-            f"Siz muvaffaqiyatli ro'yxatdan o'tdingiz.\n\n"
-            f"👥 Referal linkingiz:\n{ref_link}\n\n"
-            f"🌳 /tree – referal daraxt\n"
-            f"🖼 /treeimg – daraxt rasmi (agar graphviz oʻrnatilgan boʻlsa)\n"
-            f"📊 /downline – avlodlar soni\n"
-            f"👤 /me – profil va balans\n"
-            f"💳 /balance – balans\n"
-            f"💸 /withdraw <sum> – pul yechish soʻrovi\n"
-            f"🧾 /transactions – tranzaksiyalar tarixi"
-        )
-
+# Tree text
 @router.message(Command("tree"))
 async def cmd_tree(message: types.Message):
     tree = await build_tree_text(message.from_user.id, max_depth=MAX_TREE_DEPTH)
@@ -65,6 +33,7 @@ async def cmd_tree(message: types.Message):
         return
     await message.reply(f"🌳 Sizning referal daraxtingiz:\n\n<pre>{tree}</pre>")
 
+# Tree image (graphviz)
 ROLE_COLOR = {
     "owner": "red",
     "admin": "orange",
@@ -166,7 +135,6 @@ async def cmd_withdraw(message: types.Message):
             return await message.reply("Balansingizda yetarli mablagʻ yoʻq.")
     tx = await create_withdraw_request(message.from_user.id, amount)
     await message.reply(f"💸 Yechib olish soʻrovingiz qabul qilindi. TX_ID: {tx.id}. Admin tasdiqlashini kuting.")
-    # Notify admins
     for admin in ALL_OWNER_IDS:
         try:
             await message.bot.send_message(
@@ -187,7 +155,7 @@ async def cmd_transactions(message: types.Message):
         lines.append(f"ID:{t.id} | {t.type} | {t.amount:.2f} | {t.status} | {t.created_at.strftime('%Y-%m-%d %H:%M')}")
     await message.reply("🧾 Sizning tranzaksiyalaringiz:\n\n" + "\n".join(lines))
 
-# ------------------- Admin withdraw commands -------------------
+# Admin withdraw commands
 @router.message(Command("withdraw_requests"))
 async def cmd_withdraw_requests(message: types.Message):
     if message.from_user.id not in ALL_OWNER_IDS:
@@ -217,7 +185,6 @@ async def cmd_confirm_withdraw(message: types.Message):
         await message.reply("Foydalanuvchi balansida yetarli mablagʻ yoʻq.")
     elif res == "approved":
         await message.reply("✅ Tranzaksiya tasdiqlandi.")
-        # Notify user
         async with AsyncSessionLocal() as session:
             tx = await session.get(Transaction, tx_id)
             if tx:

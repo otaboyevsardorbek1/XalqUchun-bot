@@ -14,6 +14,10 @@ WEBHOOK_PATH = "/webhook"
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}" if WEBHOOK_HOST else None
 
 # Referral rewards config
-LEVEL_REWARDS = {1: 100.0, 2: 50.0, 3: 25.0, 4: 10.0, 5: 5.0}
+LEVEL_REWARDS = {1: 100.0, 
+                 2: 50.0,
+                 3: 25.0, 
+                 4: 10.0, 
+                 5: 5.0}
 MAX_REWARD_LEVEL = max(LEVEL_REWARDS.keys())
 MAX_TREE_DEPTH = int(os.getenv("MAX_TREE_DEPTH", "15"))

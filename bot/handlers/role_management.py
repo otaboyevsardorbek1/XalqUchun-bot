@@ -5,12 +5,11 @@ from sqlalchemy import select, func
 
 from db.database import AsyncSessionLocal
 from db.models import User
-from config import OWNER_ID, ALL_OWNER_IDS
+from config import ALL_OWNER_IDS
 from utils.referral import get_user_by_tid
 
 router = Router()
 
-# Role hierarchy (simplified)
 ROLE_HIERARCHY = {
     "owner": ["admin", "manager", "worker", "diller", "dastafka", "guest"],
     "admin": ["manager", "worker", "diller", "dastafka", "guest"],
@@ -39,7 +38,6 @@ async def cmd_setrole(message: types.Message):
     allowed_roles = ["owner", "admin", "manager", "worker", "diller", "dastafka", "guest"]
     if new_role not in allowed_roles:
         return await message.reply(f"Notoʻgʻri rol. Mavjudlar: {', '.join(allowed_roles)}")
-    # Check if actor can assign this role
     async with AsyncSessionLocal() as session:
         actor = await get_user_by_tid(session, message.from_user.id)
         if not actor:
