@@ -7,6 +7,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = int(os.getenv("OWNER_ID", "0"))
 ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS", "").split(","))) if os.getenv("ADMIN_IDS") else []
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///bot.db")
+ALL_OWNER_IDS = [OWNER_ID] + ADMIN_IDS
 LOG_FILE = "bot.log"
 MAX_LOG_SIZE_MB = int(os.getenv("MAX_LOG_SIZE_MB", "20"))
 WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "")  # e.g. https://example.com
