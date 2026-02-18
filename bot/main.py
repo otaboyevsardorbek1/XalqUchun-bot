@@ -35,10 +35,6 @@ async def Admin_info_message(text: str):
 async def monitor_carts():
     while True:
         await asyncio.sleep(60)  # har 60 sekund
-        now = datetime.now()
-        # har bir foydalanuvchi savati uchun vaqtni qayerda saqlaymiz?
-        # carts ga qo'shimcha ma'lumot saqlashimiz kerak: cart_created_time
-        # utils/cart.py da carts ga vaqtni qo'shamiz
         from utils.cart import carts, get_cart_creation_time
         for user_id, cart in list(carts.items()):
             created_time = cart.get('_created_time')

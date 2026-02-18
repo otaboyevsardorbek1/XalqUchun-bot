@@ -201,7 +201,7 @@ async def admin_broadcast_start(message: types.Message, state: FSMContext):
         reply_markup=get_broadcast_type_keyboard(),
         parse_mode="Markdown"
     )
-
+# /ads
 @router.callback_query(F.data.startswith("broadcast_type_"))
 async def broadcast_type_selected(callback: CallbackQuery, state: FSMContext):
     cb_type = callback.data.replace("broadcast_type_", "")
