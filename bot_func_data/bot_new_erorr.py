@@ -25,6 +25,7 @@ def loggers(log_name):
     logger = logging.getLogger(log_name)
     return logger
 midwer_log=loggers(log_name="Midlwers")
+
 class ErrorReporterMiddleware(BaseMiddleware):
     """
     Har qanday handlerda xato yuz bersa — shu middleware uni tutadi va admin(lar)ga yuboradi.

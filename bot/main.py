@@ -1,103 +1,99 @@
 import asyncio
-from datetime import datetime, timedelta
 import logging
+import sys
+from datetime import datetime
+
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
-from utils.cart import clear_cart, get_cart
-from config import BOT_TOKEN
+from aiogram.types import BotCommand
+
+from config import BOT_TOKEN, ADMIN_IDS, OWNER_ID, WEBHOOK_URL
 from db.database import engine
 from db.base import Base
-from handlers import start, catalog, cart, checkout, admin,profile
-from config import ADMIN_IDS
+from handlers import (
+    start, catalog, cart, checkout, admin, profile,
+    referral, role_management, webhook_management, maintenance, log_handlers
+)
 from keyboards.main import main_menu
-# from aiogram.types import Update
-# from aiogram.types import ErrorEvent
-from aiogram.types import BotCommand
+from middlewares.error_reporter import ErrorReporterMiddleware
+from middlewares.maintenance import MaintenanceMiddleware
+from middlewares.role_access import RoleAccessMiddleware
+from utils.start_stop import notify_admins_startup, notify_admins_shutdown
+from utils.log_utils import check_log_file
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Bot yaratish (to'g'rilangan qism)
+# Bot setup
 bot = Bot(
-        token=BOT_TOKEN,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-    )
-dp = Dispatcher(storage=MemoryStorage())
+    token=BOT_TOKEN,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+)
+storage = MemoryStorage()
+dp = Dispatcher(storage=storage)
 
-async def Admin_info_message(text: str):
-    for admin_id in ADMIN_IDS:
-        try:
-            await bot.send_message(admin_id, text,reply_markup=main_menu)
-        except Exception as e:
-            logger.error(f"Admin {admin_id} ga xabar yuborishda xato: {e}")
+# Register middlewares
+dp.message.middleware(ErrorReporterMiddleware(bot, ADMIN_IDS + [OWNER_ID]))
+dp.message.middleware(MaintenanceMiddleware())
+dp.message.middleware(RoleAccessMiddleware())
+dp.callback_query.middleware(ErrorReporterMiddleware(bot, ADMIN_IDS + [OWNER_ID]))
+dp.callback_query.middleware(MaintenanceMiddleware())
+dp.callback_query.middleware(RoleAccessMiddleware())
 
-async def monitor_carts():
-    while True:
-        await asyncio.sleep(60)  # har 60 sekund
-        from utils.cart import carts, get_cart_creation_time
-        for user_id, cart in list(carts.items()):
-            created_time = cart.get('_created_time')
-            if created_time and now - created_time > timedelta(minutes=10):
-                # adminga yuborish
-                text = f"⏰ {user_id} foydalanuvchining savati 10 daqiqadan oshdi. Tarkibi:\n"
-                for item_id, item in cart.items():
-                    if item_id == '_created_time':
-                        continue
-                    if item['type'] == 'regular':
-                        text += f"• {item['name']} x{item['qty']} - {item['qty']*item['price']} so'm\n"
-                    else:
-                        text += f"• {item['name']} x{item['qty']} {item['unit']} (maxsus)\n"
-                for admin_id in ADMIN_IDS:
-                    try:
-                        await bot.send_message(admin_id, text)
-                    except:
-                        pass
-                # savatni tozalaymiz
-                clear_cart(user_id)
-                
+# Include routers
+dp.include_router(start.router)
+dp.include_router(catalog.router)
+dp.include_router(cart.router)
+dp.include_router(checkout.router)
+dp.include_router(admin.router)
+dp.include_router(profile.router)
+dp.include_router(referral.router)
+dp.include_router(role_management.router)
+dp.include_router(webhook_management.router)
+dp.include_router(maintenance.router)
+dp.include_router(log_handlers.router)
+
 async def on_startup():
-    # Ma'lumotlar bazasini yaratish
+    # Create DB tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    # Default komandalarni o'rnatish
-    commands = [
+    # Set bot commands (global and per-role will be set dynamically)
+    await bot.set_my_commands([
         BotCommand(command="start", description="Botni ishga tushirish"),
         BotCommand(command="help", description="Yordam"),
-        BotCommand(command="profile", description="Profil ma'lumotlari"),
-        BotCommand(command="orders", description="Buyurtmalar (admin)"),
-    ]
-    await bot.set_my_commands(commands)
-    await Admin_info_message(f"✅ Bot ishga tushdi:{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("Bot ishga tushdi...")
+        BotCommand(command="profile", description="Profil"),
+    ])
+    await notify_admins_startup(bot, ADMIN_IDS + [OWNER_ID])
+    # Check log file size
+    asyncio.create_task(check_log_file(bot, OWNER_ID))
+    # Set webhook if configured
+    if WEBHOOK_URL:
+        await bot.set_webhook(WEBHOOK_URL)
+        logger.info(f"Webhook set to {WEBHOOK_URL}")
 
-async def stop_bot():
-    print("Bot to'xtadi...")
-    await Admin_info_message(f"✅ Bot to'xtadi:{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+async def on_shutdown():
+    await notify_admins_shutdown(bot, ADMIN_IDS + [OWNER_ID])
+    if WEBHOOK_URL:
+        await bot.delete_webhook()
     await bot.session.close()
     await engine.dispose()
-    await dp.storage.close()
-        
 
 async def main():
-    # Routerlarni ulash
-    dp.include_router(start.router)
-    dp.include_router(catalog.router)
-    dp.include_router(cart.router)
-    dp.include_router(checkout.router)
-    dp.include_router(admin.router)
-    dp.include_router(profile.router)
-
-    # Bot ishga tushganda bazani yaratish
     dp.startup.register(on_startup)
-    dp.shutdown.register(stop_bot)
+    dp.shutdown.register(on_shutdown)
 
-    await dp.start_polling(bot)
+    if WEBHOOK_URL:
+        # Start webhook mode (requires FastAPI or similar, omitted for brevity)
+        # For simplicity, we use polling. If you need webhook, implement FastAPI app.
+        logger.warning("Webhook configured but using polling. To use webhook, run via FastAPI.")
+        await dp.start_polling(bot)
+    else:
+        await dp.start_polling(bot)
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
-        print("Bot to'xtatildi...")
-    finally:
-        asyncio.run(stop_bot())
+        logger.info("Bot stopped.")
