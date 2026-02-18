@@ -4,6 +4,7 @@ from db.models import User, Transaction
 from typing import Optional, List
 from datetime import datetime
 from config import OWNER_ID, LEVEL_REWARDS, MAX_REWARD_LEVEL
+from sqlalchemy.exc import IntegrityError
 
 async def get_user_by_tid(session, tid: int) -> Optional[User]:
     result = await session.execute(select(User).where(User.telegram_id == tid))
@@ -11,46 +12,58 @@ async def get_user_by_tid(session, tid: int) -> Optional[User]:
 
 async def add_user(telegram_id: int, username: str, first_name: str, referrer_tid: Optional[int] = None) -> bool:
     async with AsyncSessionLocal() as session:
+        # 1. Mavjudlikni tekshirish
         existing = await get_user_by_tid(session, telegram_id)
         if existing:
             return False
-        user = User(
-            telegram_id=telegram_id,
-            username=username,
-            full_name=first_name,
-            referrer_telegram_id=referrer_tid,
-            role="guest"
-        )
-        session.add(user)
-        # Distribute bonuses if referrer exists
-        if referrer_tid:
-            ref = await get_user_by_tid(session, referrer_tid)
-            if ref:
-                ref.referrals_count = (ref.referrals_count or 0) + 1
-                current = ref
-                level = 1
-                while current and level <= MAX_REWARD_LEVEL:
-                    reward = LEVEL_REWARDS.get(level, 0.0)
-                    if reward:
-                        current.balance = (current.balance or 0.0) + reward
-                        tx = Transaction(
-                            user_telegram_id=current.telegram_id,
-                            amount=reward,
-                            type="bonus",
-                            method="system",
-                            status="approved",
-                            processed_at=datetime.utcnow(),
-                            admin_telegram_id=OWNER_ID,
-                            note=f"Level {level} bonus from {telegram_id}"
-                        )
-                        session.add(tx)
-                    if current.referrer_telegram_id:
-                        current = await get_user_by_tid(session, current.referrer_telegram_id)
-                    else:
-                        current = None
-                    level += 1
-        await session.commit()
-        return True
+
+        try:
+            # 2. Yangi foydalanuvchi yaratish
+            user = User(
+                telegram_id=telegram_id,
+                username=username,
+                full_name=first_name,
+                referrer_telegram_id=referrer_tid,
+                role="guest"
+            )
+            session.add(user)
+
+            # 3. Agar referrer (taklif qiluvchi) bo‘lsa, bonuslarni taqsimlash
+            if referrer_tid:
+                ref = await get_user_by_tid(session, referrer_tid)
+                if ref:
+                    ref.referrals_count = (ref.referrals_count or 0) + 1
+                    current = ref
+                    level = 1
+                    while current and level <= MAX_REWARD_LEVEL:
+                        reward = LEVEL_REWARDS.get(level, 0.0)
+                        if reward:
+                            current.balance = (current.balance or 0.0) + reward
+                            tx = Transaction(
+                                user_telegram_id=current.telegram_id,
+                                amount=reward,
+                                type="bonus",
+                                method="system",
+                                status="approved",
+                                processed_at=datetime.utcnow(),
+                                admin_telegram_id=OWNER_ID,
+                                note=f"Level {level} bonus from {telegram_id}"
+                            )
+                            session.add(tx)
+                        if current.referrer_telegram_id:
+                            current = await get_user_by_tid(session, current.referrer_telegram_id)
+                        else:
+                            current = None
+                        level += 1
+
+            # 4. O‘zgarishlarni saqlash
+            await session.commit()
+            return True
+
+        except IntegrityError:
+            # 5. Parallel so‘rov tufayli yozuv qo‘shilgan bo‘lishi mumkin
+            await session.rollback()
+            return False
 
 async def get_children(tid: int) -> List[User]:
     async with AsyncSessionLocal() as session:

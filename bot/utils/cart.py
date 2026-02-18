@@ -11,7 +11,6 @@ def get_next_custom_id() -> int:
 
 # {user_id: {item_id: {"type": "regular"/"custom", "name": str, "qty": float, "unit": str, "price": float}}}
 carts: Dict[int, Dict[Any, Dict]] = {}
-
 def add_to_cart(user_id: int, item_id: Any, qty: float, price: float = 0, name: str = "", unit: str = "dona", item_type: str = "regular"):
     if user_id not in carts:
         carts[user_id] = {}
@@ -22,7 +21,6 @@ def add_to_cart(user_id: int, item_id: Any, qty: float, price: float = 0, name: 
             carts[user_id][item_id] = {"type": "regular", "name": name, "qty": qty, "price": price, "unit": "dona"}
         else:
             carts[user_id][item_id] = {"type": "custom", "name": name, "qty": qty, "unit": unit, "price": 0}
-
 def get_cart(user_id: int) -> Dict[Any, Dict]:
     return carts.get(user_id, {})
 

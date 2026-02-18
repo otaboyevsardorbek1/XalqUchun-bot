@@ -5,11 +5,12 @@ from datetime import datetime
 from aiogram import BaseMiddleware, types, Bot
 from aiogram.exceptions import TelegramBadRequest
 import logging
+from typing import List  # <-- qo'shildi
 
 logger = logging.getLogger(__name__)
 
 class ErrorReporterMiddleware(BaseMiddleware):
-    def __init__(self, bot: Bot, admin_ids: list[int], max_msg_len: int = 3500):
+    def __init__(self, bot: Bot, admin_ids: List[int], max_msg_len: int = 3500):  # list[int] -> List[int]
         self.bot = bot
         self.admin_ids = admin_ids
         self.max_msg_len = max_msg_len

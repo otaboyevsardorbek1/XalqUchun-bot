@@ -80,8 +80,9 @@ class Message(Base):
     text = Column(Text, nullable=False)
     message_type = Column(String(50), default="text")
     created_at = Column(DateTime, default=datetime.utcnow)
-    sender = relationship("User", foreign_keys=[sender_telegram_id])
-    receiver = relationship("User", foreign_keys=[receiver_telegram_id])
+
+    sender = relationship("User", foreign_keys=[sender_telegram_id], overlaps="sent_messages")
+    receiver = relationship("User", foreign_keys=[receiver_telegram_id], overlaps="received_messages")
 
 class Transaction(Base):
     __tablename__ = "transactions"

@@ -64,18 +64,27 @@ async def get_location(message: types.Message, state: FSMContext):
     phone = data['phone']
     loc = data['location']
 
-    async with AsyncSessionLocal() as session:
-        product_ids = list(cart.keys())
-        result = await session.execute(select(Product).where(Product.id.in_(product_ids)))
-        products = {p.id: p.name for p in result.scalars().all()}
+    # Oddiy mahsulotlar nomlarini olish (faqat musbat ID'lar)
+    product_ids = [pid for pid in cart.keys() if pid > 0]
+    products = {}
+    if product_ids:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(Product).where(Product.id.in_(product_ids)))
+            products = {p.id: p.name for p in result.scalars().all()}
 
     lines = []
     total = 0
     for pid, item in cart.items():
-        name = products.get(pid, "Noma'lum")
-        subtotal = item['qty'] * item['price']
-        lines.append(f"{name} x{item['qty']} = {subtotal} so'm")
-        total += subtotal
+        if pid > 0:  # oddiy mahsulot
+            name = products.get(pid, "Noma'lum")
+            subtotal = item['qty'] * item['price']
+            lines.append(f"{name} x{item['qty']} = {subtotal} so'm")
+            total += subtotal
+        else:  # maxsus mahsulot
+            name = item['name']
+            unit = item['unit']
+            lines.append(f"📦 {name} x{item['qty']} {unit} (maxsus)")
+
     order_text = "Buyurtma:\n" + "\n".join(lines) + f"\nJami: {total} so'm"
     order_text += f"\n📞 {phone}\n📍 [Xarita]({loc})"
 
@@ -97,7 +106,7 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
     user_id = callback.from_user.id
 
     async with AsyncSessionLocal() as session:
-        # Foydalanuvchini bazaga qo'shish yoki yangilash
+        # Foydalanuvchini topish yoki yaratish
         result = await session.execute(select(User).where(User.telegram_id == user_id))
         user = result.scalar_one_or_none()
         if not user:
@@ -112,24 +121,29 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
         # Buyurtma yaratish
         order = Order(user_id=user.id, phone=phone, location_link=location)
         session.add(order)
-        await session.flush()
+        await session.flush()  # order.id olish uchun
 
-        # Buyurtma mahsulotlarini qo'shish
+        # Mahsulotlarni qo'shish
         for pid, item in cart.items():
-            order_item = OrderItem(
-                order_id=order.id,
-                product_id=pid,
-                quantity=item['qty'],
-                price=item['price']
-            )
+            if pid > 0:  # oddiy mahsulot
+                order_item = OrderItem(
+                    order_id=order.id,
+                    product_id=pid,
+                    quantity=item['qty'],
+                    price=item['price']
+                )
+            else:  # maxsus mahsulot
+                order_item = OrderItem(
+                    order_id=order.id,
+                    product_id=None,
+                    quantity=item['qty'],
+                    price=0,
+                    custom_name=item['name'],
+                    custom_unit=item['unit']
+                )
             session.add(order_item)
 
         await session.commit()
-
-        # Mahsulot nomlarini olish
-        product_ids = list(cart.keys())
-        result = await session.execute(select(Product).where(Product.id.in_(product_ids)))
-        products = {p.id: p.name for p in result.scalars().all()}
 
     # Savatni tozalash
     clear_cart(user_id)
@@ -138,6 +152,14 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     # Adminlarga xabar yuborish
+    # Mahsulot nomlarini olish (oddiy mahsulotlar uchun)
+    product_ids = [pid for pid in cart.keys() if pid > 0]
+    products = {}
+    if product_ids:
+        async with AsyncSessionLocal() as session:
+            result = await session.execute(select(Product).where(Product.id.in_(product_ids)))
+            products = {p.id: p.name for p in result.scalars().all()}
+
     admin_text = (
         f"🆕 Yangi buyurtma!\n"
         f"👤 {callback.from_user.full_name} (ID: {user_id})\n"
@@ -147,10 +169,13 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
     )
     total = 0
     for pid, item in cart.items():
-        name = products.get(pid, "Noma'lum")
-        subtotal = item['qty'] * item['price']
-        admin_text += f"{name} x{item['qty']} = {subtotal} so'm\n"
-        total += subtotal
+        if pid > 0:
+            name = products.get(pid, "Noma'lum")
+            subtotal = item['qty'] * item['price']
+            admin_text += f"{name} x{item['qty']} = {subtotal} so'm\n"
+            total += subtotal
+        else:
+            admin_text += f"📦 {item['name']} x{item['qty']} {item['unit']} (maxsus)\n"
     admin_text += f"Jami: {total} so'm"
 
     for admin_id in ADMIN_IDS:
