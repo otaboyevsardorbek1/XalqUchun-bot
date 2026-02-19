@@ -7,7 +7,10 @@ primary_region = "fra"  # Yevropa serveri
 [env]
   # Environment variables bu yerga yoziladi (yoki fly secrets orqali)
   PYTHONUNBUFFERED = "true"
-
+[mounts]
+  source = "data"
+  destination = "/data"
+  
 [experimental]
   allowed_public_ports = []
   auto_rollback = true
