@@ -9,7 +9,7 @@ from db.database import AsyncSessionLocal
 from db.models import User, Order, OrderItem, Product
 from states.checkout import Checkout
 from utils.cart import get_cart, clear_cart
-from config import ADMIN_IDS
+from bot.data import ADMIN_IDS
 
 router = Router()
 

@@ -10,7 +10,7 @@ from db.models import Category, Product, CustomOrder
 from keyboards.catalog import categories_kb, products_kb
 from states.checkout import AddToCart, CustomOrder as CustomOrderState
 from utils.cart import add_to_cart, get_next_custom_id
-from config import ADMIN_IDS
+from bot.data import ADMIN_IDS
 import logging
 
 router = Router()

@@ -6,7 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy import select
 
-from config import ADMIN_IDS
+from bot.data import ADMIN_IDS
 from db.database import AsyncSessionLocal
 from db.models import User
 from keyboards.main import main_menu

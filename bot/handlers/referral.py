@@ -14,7 +14,7 @@ from utils.referral import (
     create_withdraw_request, list_user_transactions, list_pending_withdrawals,
     process_withdraw, manual_payout, get_user_by_tid
 )
-from config import ALL_OWNER_IDS, MAX_TREE_DEPTH, OWNER_ID
+from bot.data import ALL_OWNER_IDS, MAX_TREE_DEPTH, OWNER_ID
 
 try:
     from graphviz import Digraph

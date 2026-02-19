@@ -4,7 +4,7 @@ from datetime import datetime
 from aiogram import Bot
 from aiogram.types import FSInputFile
 import logging
-from config import LOG_FILE, MAX_LOG_SIZE_MB
+from bot.data import LOG_FILE, MAX_LOG_SIZE_MB
 from aiogram.types import User
 
 

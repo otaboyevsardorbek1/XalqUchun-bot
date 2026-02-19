@@ -3,7 +3,7 @@ from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram.types import FSInputFile
 from datetime import datetime
-from config import LOG_FILE, OWNER_ID
+from bot.data import LOG_FILE, OWNER_ID
 
 router = Router()
 

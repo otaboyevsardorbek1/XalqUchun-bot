@@ -1,27 +1,24 @@
 import asyncio
 import logging
-import sys
-from datetime import datetime
-
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 
-from config import BOT_TOKEN, ADMIN_IDS, OWNER_ID, WEBHOOK_URL
-from db.database import engine
-from db.base import Base
-from handlers import (
+from bot.data import BOT_TOKEN, ADMIN_IDS, OWNER_ID, WEBHOOK_URL
+from bot.db.database import engine
+from bot.db.base import Base
+from bot.handlers import (
     start, catalog, cart, checkout, admin, profile,
     referral, role_management, webhook_management, maintenance, log_handlers
 )
-from keyboards.main import main_menu
-from middlewares.error_reporter import ErrorReporterMiddleware
-from middlewares.maintenance import MaintenanceMiddleware
-from middlewares.role_access import RoleAccessMiddleware
-from utils.start_stop import notify_admins_startup, notify_admins_shutdown
-from utils.log_utils import check_log_file
+from bot.keyboards.main import main_menu
+from bot.middlewares.error_reporter import ErrorReporterMiddleware
+from bot.middlewares.maintenance import MaintenanceMiddleware
+from bot.middlewares.role_access import RoleAccessMiddleware
+from bot.utils.start_stop import notify_admins_startup, notify_admins_shutdown
+from bot.utils.log_utils import check_log_file
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

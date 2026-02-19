@@ -11,7 +11,7 @@ from states.admin import BroadcastState
 from aiogram.exceptions import TelegramBadRequest
 import asyncio
 
-from config import ADMIN_IDS
+from bot.data import ADMIN_IDS
 from db.database import AsyncSessionLocal
 from db.models import Order, OrderItem,  User
 from states.admin import CourierState

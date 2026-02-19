@@ -3,7 +3,7 @@ from db.database import AsyncSessionLocal
 from db.models import User, Transaction
 from typing import Optional, List
 from datetime import datetime
-from config import OWNER_ID, LEVEL_REWARDS, MAX_REWARD_LEVEL
+from bot.data import OWNER_ID, LEVEL_REWARDS, MAX_REWARD_LEVEL
 from sqlalchemy.exc import IntegrityError
 
 async def get_user_by_tid(session, tid: int) -> Optional[User]:

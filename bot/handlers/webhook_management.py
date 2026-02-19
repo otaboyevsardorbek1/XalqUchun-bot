@@ -1,6 +1,6 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command
-from config import WEBHOOK_URL, OWNER_ID, ADMIN_IDS
+from bot.data import WEBHOOK_URL, OWNER_ID, ADMIN_IDS
 
 router = Router()
 

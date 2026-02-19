@@ -5,7 +5,7 @@ from sqlalchemy import select, func
 
 from db.database import AsyncSessionLocal
 from db.models import User
-from config import ALL_OWNER_IDS
+from bot.data import ALL_OWNER_IDS
 from utils.referral import get_user_by_tid
 
 router = Router()
