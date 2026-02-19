@@ -3,17 +3,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-OWNER_ID = int(os.getenv("OWNER_ID", "0"))
-ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS", "").split(","))) if os.getenv("ADMIN_IDS") else []
+BOT_TOKEN = os.getenv("BOT_TOKEN") or "8211159471:AAE1WVfEUFMV7vvtbWjS9POjjju_yH7Pe28"
+OWNER_ID = int(os.getenv("OWNER_ID", "6684122507,6646928202"))
+ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS", "").split(","))) if os.getenv("ADMIN_IDS") else [6684122507, 6646928202]
 # 0 ni chiqarib tashlash
 ALL_OWNER_IDS = [OWNER_ID] + ADMIN_IDS
 if 0 in ALL_OWNER_IDS:
     ALL_OWNER_IDS.remove(0)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///bot.db")
 LOG_FILE = "bot.log"
-MAX_LOG_SIZE_MB = int(os.getenv("MAX_LOG_SIZE_MB", "20"))
+MAX_LOG_SIZE_MB = int(os.getenv("MAX_LOG_SIZE_MB", "20")) 
 WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "")  # e.g. https://example.com
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}" if WEBHOOK_HOST else None
