@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, CallbackQuery
 from sqlalchemy import select
 from typing import Union
-
+from keyboards.main import main_menu
 from db.database import AsyncSessionLocal
 from db.models import User, Order, OrderItem, Product
 from states.checkout import Checkout
@@ -148,7 +148,8 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
     # Savatni tozalash
     clear_cart(user_id)
 
-    await callback.message.edit_text("✅ Buyurtmangiz qabul qilindi! Tez orada siz bilan bogʻlanamiz.")
+    await callback.message.edit_text("✅ Buyurtmangiz qabul qilindi! Tez orada siz bilan bogʻlanamiz.",reply_markup=None)
+    await callback.message.answer("Asosiy menyu:", reply_markup=main_menu)
     await callback.answer()
 
     # Adminlarga xabar yuborish
@@ -166,6 +167,8 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
         f"📞 {phone}\n"
         f"📍 [Xarita]({location})\n"
         f"Buyurtma tarkibi:\n"
+        f"-------------------\n"
+        f"Vaqt: {order.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
     )
     total = 0
     for pid, item in cart.items():

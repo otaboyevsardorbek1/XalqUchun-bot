@@ -278,18 +278,18 @@ async def custom_confirm_yes(callback: CallbackQuery, state: FSMContext):
     products_text = ""
     for p in products:
         products_text += f"• {p['name']}: {p['quantity']} {p['unit']}\n"
-    admin_text = (
-        f"📝 **Maxsus buyurtma**\n\n"
-        f"👤 Foydalanuvchi: {callback.from_user.full_name} (ID: {user_id})\n"
-        f"📞 {phone}\n"
-        f"📍 [Xarita]({location})\n"
-        f"Buyurtma tarkibi:\n{products_text}"
-    )
-    for admin_id in ADMIN_IDS:
-        try:
-            await callback.bot.send_message(admin_id, admin_text, parse_mode="Markdown")
-        except Exception as e:
-            logger.error(f"Admin {admin_id} ga xabar yuborilmadi: {e}")
+    # admin_text = (
+    #     f"📝 **Maxsus buyurtma**\n\n"
+    #     f"👤 Foydalanuvchi: {callback.from_user.full_name} (ID: {user_id})\n"
+    #     f"📞 {phone}\n"
+    #     f"📍 [Xarita]({location})\n"
+    #     f"Buyurtma tarkibi:\n{products_text}"
+    # )
+    # for admin_id in ADMIN_IDS:
+    #     try:
+    #         await callback.bot.send_message(admin_id, admin_text, parse_mode="Markdown")
+    #     except Exception as e:
+    #         logger.error(f"Admin {admin_id} ga xabar yuborilmadi: {e}")
     try:
         async with AsyncSessionLocal() as session:
             for p in products:
