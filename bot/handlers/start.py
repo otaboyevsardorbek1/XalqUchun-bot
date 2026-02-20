@@ -1,7 +1,7 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command
-from keyboards.main import main_menu
-from utils.referral import add_user
+from bot.keyboards.main import main_menu
+from bot.utils.referral import add_user
 
 router = Router()
 

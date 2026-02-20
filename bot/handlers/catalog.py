@@ -4,12 +4,12 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
 import re
 from datetime import datetime
-from keyboards.main import main_menu
-from db.database import AsyncSessionLocal
-from db.models import Category, Product, CustomOrder
-from keyboards.catalog import categories_kb, products_kb
-from states.checkout import AddToCart, CustomOrder as CustomOrderState
-from utils.cart import add_to_cart, get_next_custom_id
+from bot.keyboards.main import main_menu
+from bot.db.database import AsyncSessionLocal
+from bot.db.models import Category, Product, CustomOrder
+from bot.keyboards.catalog import categories_kb, products_kb
+from bot.states.checkout import AddToCart, CustomOrder as CustomOrderState
+from bot.utils.cart import add_to_cart, get_next_custom_id
 from bot.data import ADMIN_IDS
 import logging
 

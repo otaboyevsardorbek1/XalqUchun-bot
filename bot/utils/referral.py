@@ -1,6 +1,6 @@
 from sqlalchemy import select, func
-from db.database import AsyncSessionLocal
-from db.models import User, Transaction
+from bot.db.database import AsyncSessionLocal
+from bot.db.models import User, Transaction
 from typing import Optional, List
 from datetime import datetime
 from bot.data import OWNER_ID, LEVEL_REWARDS, MAX_REWARD_LEVEL

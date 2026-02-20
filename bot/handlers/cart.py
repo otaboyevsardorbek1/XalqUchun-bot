@@ -5,12 +5,12 @@ from sqlalchemy import select
 import re
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from utils.cart import get_cart, remove_from_cart, update_cart_item_qty
-from db.models import Product
-from db.database import AsyncSessionLocal
-from keyboards.cart import cart_kb
-from keyboards.main import main_menu
-from states.checkout import EditCustomItem
+from bot.utils.cart import get_cart, remove_from_cart, update_cart_item_qty
+from bot.db.models import Product
+from bot.db.database import AsyncSessionLocal
+from bot.keyboards.cart import cart_kb
+from bot.keyboards.main import main_menu
+from bot.states.checkout import EditCustomItem
 
 router = Router()
 

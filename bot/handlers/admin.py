@@ -12,9 +12,9 @@ from aiogram.exceptions import TelegramBadRequest
 import asyncio
 
 from bot.data import ADMIN_IDS
-from db.database import AsyncSessionLocal
-from db.models import Order, OrderItem,  User
-from states.admin import CourierState
+from bot.db.database import AsyncSessionLocal
+from bot.db.models import Order, OrderItem,  User
+from bot.states.admin import CourierState
 import logging
 
 router = Router()

@@ -7,10 +7,10 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 from sqlalchemy import select
 
 from bot.data import ADMIN_IDS
-from db.database import AsyncSessionLocal
-from db.models import User
-from keyboards.main import main_menu
-from utils.referral import get_user_by_tid
+from bot.db.database import AsyncSessionLocal
+from bot.db.models import User
+from bot.keyboards.main import main_menu
+from bot.utils.referral import get_user_by_tid
 
 router = Router()
 

@@ -7,9 +7,9 @@ from aiogram.filters import Command
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, FSInputFile
 from sqlalchemy import select, func
 
-from db.database import AsyncSessionLocal
-from db.models import User, Transaction
-from utils.referral import (
+from bot.db.database import AsyncSessionLocal
+from bot.db.models import User, Transaction
+from bot.utils.referral import (
     get_children, count_downline, build_tree_text,
     create_withdraw_request, list_user_transactions, list_pending_withdrawals,
     process_withdraw, manual_payout, get_user_by_tid

@@ -5,10 +5,10 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, CallbackQuery
 from sqlalchemy import select
 from typing import Union
 from keyboards.main import main_menu
-from db.database import AsyncSessionLocal
-from db.models import User, Order, OrderItem, Product
-from states.checkout import Checkout
-from utils.cart import get_cart, clear_cart
+from bot.db.database import AsyncSessionLocal
+from bot.db.models import User, Order, OrderItem, Product
+from bot.states.checkout import Checkout
+from bot.utils.cart import get_cart, clear_cart
 from bot.data import ADMIN_IDS
 
 router = Router()

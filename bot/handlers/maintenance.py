@@ -1,8 +1,8 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command
 from bot.data import OWNER_ID, ADMIN_IDS
-from middlewares.maintenance import MAINTENANCE_MODE
-from utils.auth import is_admin, is_owner
+from bot.middlewares.maintenance import MAINTENANCE_MODE
+from bot.utils.auth import is_admin, is_owner
 router = Router()
  
 
