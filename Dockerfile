@@ -2,14 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Kutubxonalarni o'rnatish
+# Sistem paketlarini o'rnatish
+RUN apt-get update && apt-get install -y \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python paketlarini o'rnatish
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Barcha kodlarni nusxalash
+# Kodni nusxalash
 COPY . .
 
-# Volume mount qilingan papka
+# Data papkasini yaratish
 RUN mkdir -p /data && chmod 777 /data
 
 # Botni ishga tushirish

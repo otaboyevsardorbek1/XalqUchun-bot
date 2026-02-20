@@ -3,14 +3,12 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardBut
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
 import re
-from datetime import datetime
 from bot.keyboards.main import main_menu
 from bot.db.database import AsyncSessionLocal
 from bot.db.models import Category, Product, CustomOrder
 from bot.keyboards.catalog import categories_kb, products_kb
 from bot.states.checkout import AddToCart, CustomOrder as CustomOrderState
 from bot.utils.cart import add_to_cart, get_next_custom_id
-from bot.data import ADMIN_IDS
 import logging
 
 router = Router()

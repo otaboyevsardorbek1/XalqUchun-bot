@@ -14,7 +14,7 @@ async def cmd_start(message: types.Message):
     await add_user(
         message.from_user.id,
         message.from_user.username,
-        message.from_user.full_name,
+        message.from_user.full_name, 
         ref
     )
     await message.answer(
