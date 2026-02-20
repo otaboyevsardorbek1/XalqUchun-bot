@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BOT_TOKEN = os.getenv("BOT_TOKEN") or "8211159471:AAE1WVfEUFMV7vvtbWjS9POjjju_yH7Pe28"
+BOT_TOKEN = os.getenv("BOT_TOKEN") or "8211159471:AAE9JILqkqkwdTtWuFgV-F6uJAcJNwfHlf8"
 OWNER_ID = int(os.getenv("OWNER_ID", "6684122507,6646928202"))
 ADMIN_IDS = list(map(int, os.getenv("ADMIN_IDS", "").split(","))) if os.getenv("ADMIN_IDS") else [6684122507, 6646928202]
 # 0 ni chiqarib tashlash
