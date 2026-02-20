@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, CallbackQuery
 from sqlalchemy import select
 from typing import Union
-from keyboards.main import main_menu
+from bot.keyboards.main import main_menu
 from bot.db.database import AsyncSessionLocal
 from bot.db.models import User, Order, OrderItem, Product
 from bot.states.checkout import Checkout

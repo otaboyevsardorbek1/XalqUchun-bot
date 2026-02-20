@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 from datetime import datetime
 import re
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
-from states.admin import BroadcastState
+from bot.states.admin import BroadcastState
 from aiogram.exceptions import TelegramBadRequest
 import asyncio
 
