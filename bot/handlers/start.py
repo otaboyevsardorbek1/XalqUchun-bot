@@ -2,8 +2,14 @@ from aiogram import Router, types, F
 from aiogram.filters import Command
 from bot.keyboards.main import main_menu
 from bot.utils.referral import add_user
+from bot.data import ADMIN_IDS
+from bot.data import BOT_TOKEN
 
 router = Router()
+
+async def bot_token_id():
+    bot_id_parse=BOT_TOKEN.split(':')[0]
+    return int(bot_id_parse)
 
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -11,18 +17,27 @@ async def cmd_start(message: types.Message):
     ref = None
     if len(args) > 1 and args[1].isdigit():
         ref = int(args[1])
-    await add_user(
-        message.from_user.id,
-        message.from_user.username,
-        message.from_user.full_name, 
-        ref
-    )
-    await message.answer(
-        "Assalomu alaykum! Xush kelibsiz.\n"
-        "Buyurtma berish uchun quyidagi tugmalardan foydalaning.\n"
-        "Batafsil maʼlumot uchun /info ni bosing.",
-        reply_markup=main_menu
-    )
+        await add_user(
+            message.from_user.id,
+            message.from_user.username,
+            message.from_user.full_name, 
+            ref)
+    else:
+        ref= await bot_token_id()  # Bot tokenidan ID ni olish
+        await add_user(
+            message.from_user.id,
+            message.from_user.username,
+            message.from_user.full_name, 
+            ref)
+    if message.from_user.id in ADMIN_IDS:  # Agar foydalanuvchi admin bo'lsa
+        await message.answer(
+            "Assalomu alaykum, admin! Xush kelibsiz.\n")
+    else:
+        await message.answer(
+            "Assalomu alaykum! Xush kelibsiz.\n"
+            "Buyurtma berish uchun quyidagi tugmalardan foydalaning.\n"
+            "Batafsil maʼlumot uchun /info ni bosing.",
+            reply_markup=main_menu)
 
 @router.message(F.text == "📞 Biz bilan bogʻlanish")
 @router.message(Command("info"))
