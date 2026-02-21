@@ -52,10 +52,10 @@ if admin_ids_str:
             ADMIN_IDS = [int(x.strip()) for x in admin_ids_str.split(',') if x.strip()]
     except Exception as e:
         logger.error(f"ADMIN_IDS parse qilishda xato: {e}")
-        ADMIN_IDS = [6646928202]  # Default
+        ADMIN_IDS = []  # Default
 else:
     # Default adminlar
-    ADMIN_IDS = [6646928202]
+    ADMIN_IDS = []
 
 # ---------------------- ALL OWNER IDS ----------------------
 ALL_OWNER_IDS = list(set([OWNER_ID] + ADMIN_IDS))  # set() takrorlanuvchilarni olib tashlaydi
