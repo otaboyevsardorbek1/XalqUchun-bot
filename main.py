@@ -10,7 +10,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 from sqlalchemy import text
 
-from bot.data import BOT_TOKEN, ADMIN_IDS, OWNER_ID
+from bot.data import ALL_OWNER_IDS, BOT_TOKEN, ADMIN_IDS, OWNER_ID
 from bot.db.base import Base
 # MUHIM: database.py dan engine va AsyncSessionLocal ni import qiling
 from bot.db.database import engine, AsyncSessionLocal
@@ -110,7 +110,7 @@ async def on_startup():
         
         # 3. Adminlarni xabardor qilish
         logger.info("3. Adminlar xabardor qilinmoqda...")
-        await notify_admins_startup(bot, ADMIN_IDS + [OWNER_ID])
+        await notify_admins_startup(bot,ALL_OWNER_IDS)
         logger.info("✅ Adminlar xabardor qilindi")
         
         # 4. Log faylini tekshirish

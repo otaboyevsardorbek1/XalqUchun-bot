@@ -5,10 +5,10 @@ from typing import List  # add import
 
 logger = logging.getLogger(__name__)
 
-async def notify_admins_startup(bot: Bot, admin_ids: List[int]):  # changed
+async def notify_admins_startup(bot: Bot, ALL_OWNER_IDS: List[int]):  # changed
     date_now = time.strftime("%Y-%m-%d")
     time_now = time.strftime("%H:%M:%S")
-    for admin in admin_ids:
+    for admin in ALL_OWNER_IDS:
         try:
             await bot.send_message(
                 admin,
@@ -18,10 +18,10 @@ async def notify_admins_startup(bot: Bot, admin_ids: List[int]):  # changed
         except Exception as e:
             logger.error(f"Failed to notify admin {admin}: {e}")
 
-async def notify_admins_shutdown(bot: Bot, admin_ids: List[int]):  # changed
+async def notify_admins_shutdown(bot: Bot, ALL_OWNER_IDS: List[int]):  # changed
     date_now = time.strftime("%Y-%m-%d")
     time_now = time.strftime("%H:%M:%S")
-    for admin in admin_ids:
+    for admin in ALL_OWNER_IDS:
         try:
             await bot.send_message(
                 admin,

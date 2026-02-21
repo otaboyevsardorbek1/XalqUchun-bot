@@ -1,6 +1,6 @@
 from aiogram import Router, types, F
 from aiogram.filters import Command
-from bot.keyboards.main import main_menu
+from bot.keyboards.main import main_menu,admin_menu
 from bot.utils.referral import add_user
 from bot.data import ADMIN_IDS, ALL_OWNER_IDS
 from bot.data import BOT_TOKEN
@@ -31,7 +31,8 @@ async def cmd_start(message: types.Message):
             ref)
     if message.from_user.id in ADMIN_IDS or message.from_user.id in ALL_OWNER_IDS  :  # Agar foydalanuvchi admin bo'lsa
         await message.answer(
-            "Assalomu alaykum, admin! Xush kelibsiz.\n")
+            "Assalomu alaykum, admin! Xush kelibsiz.\n",
+            reply_markup=admin_menu)
     else:
         await message.answer(
             "Assalomu alaykum! Xush kelibsiz.\n"

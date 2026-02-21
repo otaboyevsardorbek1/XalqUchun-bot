@@ -164,7 +164,7 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
     admin_text = (
         f"🆕 Yangi buyurtma!\n"
         f"👤 {callback.from_user.full_name} (ID: {user_id})\n"
-        f"📞 {phone}\n"
+        f"📞 +{phone}\n"
         f"📍 [Xarita]({location})\n"
         f"Buyurtma tarkibi:\n"
         f"-------------------\n"
@@ -179,7 +179,7 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
             total += subtotal
         else:
             admin_text += f"📦 {item['name']} x{item['qty']} {item['unit']} (maxsus)\n"
-    admin_text += f"Jami: {total} so'm"
+    # admin_text += f"Jami: {total} so'm"
 
     for admin_id in ADMIN_IDS:
         try:
