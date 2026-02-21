@@ -2,9 +2,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Sistem paketlarini o'rnatish
+# Sistem paketlarini o'rnatish (graphviz uchun)
 RUN apt-get update && apt-get install -y \
     gcc \
+    graphviz \
     && rm -rf /var/lib/apt/lists/*
 
 # Python paketlarini o'rnatish

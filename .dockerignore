@@ -174,3 +174,24 @@ site
 
 **/bot.db
 database.sqlite3
+
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+env
+venv
+.env
+.git
+.gitignore
+README.md
+docker-compose.yml
+data/
+*.log
+database.sqlite3
