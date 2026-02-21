@@ -28,14 +28,14 @@ if not BOT_TOKEN:
 # ---------------------- OWNER ID ----------------------
 try:
     # OWNER_ID ni int qilib olish
-    owner_id_str = os.getenv("OWNER_ID", "6684122507")
+    owner_id_str = os.getenv("OWNER_ID", "6646928202")
     # Agar vergul bo'lsa, birinchi qiymatni olish
     if ',' in owner_id_str:
         owner_id_str = owner_id_str.split(',')[0].strip()
     OWNER_ID = int(owner_id_str)
 except (ValueError, TypeError) as e:
     logger.error(f"OWNER_ID xato: {e}")
-    OWNER_ID = 6684122507  # Default
+    OWNER_ID = 6646928202  # Default
 
 # ---------------------- ADMIN IDS ----------------------
 ADMIN_IDS = []
@@ -52,10 +52,10 @@ if admin_ids_str:
             ADMIN_IDS = [int(x.strip()) for x in admin_ids_str.split(',') if x.strip()]
     except Exception as e:
         logger.error(f"ADMIN_IDS parse qilishda xato: {e}")
-        ADMIN_IDS = [6684122507, 6646928202]  # Default
+        ADMIN_IDS = [6646928202]  # Default
 else:
     # Default adminlar
-    ADMIN_IDS = [6684122507, 6646928202]
+    ADMIN_IDS = [6646928202]
 
 # ---------------------- ALL OWNER IDS ----------------------
 ALL_OWNER_IDS = list(set([OWNER_ID] + ADMIN_IDS))  # set() takrorlanuvchilarni olib tashlaydi
