@@ -2,7 +2,7 @@ from aiogram import Router, types, F
 from aiogram.filters import Command
 from bot.keyboards.main import main_menu
 from bot.utils.referral import add_user
-from bot.data import ADMIN_IDS
+from bot.data import ADMIN_IDS, ALL_OWNER_IDS
 from bot.data import BOT_TOKEN
 
 router = Router()
@@ -29,7 +29,7 @@ async def cmd_start(message: types.Message):
             message.from_user.username,
             message.from_user.full_name, 
             ref)
-    if message.from_user.id in ADMIN_IDS:  # Agar foydalanuvchi admin bo'lsa
+    if message.from_user.id in ADMIN_IDS or message.from_user.id in ALL_OWNER_IDS  :  # Agar foydalanuvchi admin bo'lsa
         await message.answer(
             "Assalomu alaykum, admin! Xush kelibsiz.\n")
     else:
@@ -52,9 +52,15 @@ async def contact_us(message: types.Message):
 
 @router.message(Command("help"))
 async def cmd_help(message: types.Message):
-    await message.answer(
+    if message.from_user.id in ALL_OWNER_IDS:  # Agar foydalanuvchi admin bo'lsa
+        await message.answer(
         "🆘 **Yordam**\n\n"
         "Buyruqlar: /start, /help, /profile, /orders (admin)\n"
         "Referal tizim: /tree, /treeimg, /downline, /me, /balance, /withdraw, /transactions\n"
-        "Adminlar uchun: /setrole, /users, /withdraw_requests, /export_withdraws, /manual_payout, /maintenance_on, /maintenance_off, /set_webhook, /delete_webhook, /webhook_info, /log"
-    )
+        "Adminlar uchun: /setrole, /users, /withdraw_requests, /export_withdraws, /manual_payout, /maintenance_on, /maintenance_off, /set_webhook, /delete_webhook, /webhook_info, /log")
+    else:
+        await message.answer(
+            "🆘 **Yordam**\n\n"
+            "Buyruqlar: /start, /help, /profile, /orders (admin)\n"
+            "Referal tizim: /tree, /treeimg, /downline, /me, /balance, /withdraw, /transactions\n"
+        )
