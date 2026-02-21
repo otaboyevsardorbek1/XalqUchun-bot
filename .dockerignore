@@ -173,4 +173,4 @@ site
 **/codeanalizer.txt
 
 **/bot.db
-fly.toml
+database.sqlite3

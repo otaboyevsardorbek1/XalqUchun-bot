@@ -1,120 +1,19 @@
-# import asyncio
-# import logging
-# from aiogram import Bot, Dispatcher
-# from aiogram.client.default import DefaultBotProperties
-# from aiogram.enums import ParseMode
-# from aiogram.fsm.storage.memory import MemoryStorage
-# from aiogram.types import BotCommand
-
-# from bot.data import BOT_TOKEN, ADMIN_IDS, OWNER_ID, WEBHOOK_URL
-# from bot.db.database import engine
-# from bot.db.base import Base
-# from bot.handlers import (
-#     start, catalog, cart, checkout, admin, profile,
-#     referral, role_management, webhook_management, maintenance, log_handlers
-# )
-# from bot.keyboards.main import main_menu
-# from bot.middlewares.error_reporter import ErrorReporterMiddleware
-# from bot.middlewares.maintenance import MaintenanceMiddleware
-# from bot.middlewares.role_access import RoleAccessMiddleware
-# from bot.utils.start_stop import notify_admins_startup, notify_admins_shutdown
-# from bot.utils.log_utils import check_log_file
-
-# logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
-
-# # Bot setup
-# bot = Bot(
-#     token=BOT_TOKEN,
-#     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-# )
-# storage = MemoryStorage()
-# dp = Dispatcher(storage=storage)
-
-# # Register middlewares
-# dp.message.middleware(ErrorReporterMiddleware(bot, ADMIN_IDS + [OWNER_ID]))
-# dp.message.middleware(MaintenanceMiddleware())
-# dp.message.middleware(RoleAccessMiddleware())
-# dp.callback_query.middleware(ErrorReporterMiddleware(bot, ADMIN_IDS + [OWNER_ID]))
-# dp.callback_query.middleware(MaintenanceMiddleware())
-# dp.callback_query.middleware(RoleAccessMiddleware())
-
-# # Include routers
-# dp.include_router(start.router)
-# dp.include_router(catalog.router)
-# dp.include_router(cart.router)
-# dp.include_router(checkout.router)
-# dp.include_router(admin.router)
-# dp.include_router(profile.router)
-# dp.include_router(referral.router)
-# dp.include_router(role_management.router)
-# dp.include_router(webhook_management.router)
-# dp.include_router(maintenance.router)
-# dp.include_router(log_handlers.router)
-
-# async def on_startup():
-#     # Create DB tables
-#     async with engine.begin() as conn:
-#         await conn.run_sync(Base.metadata.create_all)
-#     # Set bot commands (global and per-role will be set dynamically)
-#     await bot.set_my_commands([
-#         BotCommand(command="start", description="Botni ishga tushirish"),
-#         BotCommand(command="help", description="Yordam"),
-#         BotCommand(command="profile", description="Profil"),
-#     ])
-#     await notify_admins_startup(bot, ADMIN_IDS + [OWNER_ID])
-#     # Check log file size
-#     asyncio.create_task(check_log_file(bot, OWNER_ID))
-#     # Set webhook if configured
-#     if WEBHOOK_URL:
-#         await bot.set_webhook(WEBHOOK_URL)
-#         logger.info(f"Webhook set to {WEBHOOK_URL}")
-
-# async def on_shutdown():
-#     await notify_admins_shutdown(bot, ADMIN_IDS + [OWNER_ID])
-#     if WEBHOOK_URL:
-#         await bot.delete_webhook()
-#     await bot.session.close()
-#     await engine.dispose()
-
-# async def main():
-#     dp.startup.register(on_startup)
-#     dp.shutdown.register(on_shutdown)
-
-#     if WEBHOOK_URL:
-#         # Start webhook mode (requires FastAPI or similar, omitted for brevity)
-#         # For simplicity, we use polling. If you need webhook, implement FastAPI app.
-#         logger.warning("Webhook configured but using polling. To use webhook, run via FastAPI.")
-#         await dp.start_polling(bot)
-#     else:
-#         await dp.start_polling(bot)
-
-# if __name__ == "__main__":
-#     try:
-#         asyncio.run(main())
-#     except (KeyboardInterrupt, SystemExit):
-#         logger.info("Bot stopped.")
-#====================================================================================================================================================
-
-# main.py eng yuqori qismiga qo'shing
+# main.py faylining import qismini o'zgartiring
 import sys
 import os
-
-# Keyin boshqa importlar...
 import asyncio
 import logging
-import os
-import sys
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy import text
 
 from bot.data import BOT_TOKEN, ADMIN_IDS, OWNER_ID
 from bot.db.base import Base
+# MUHIM: database.py dan engine va AsyncSessionLocal ni import qiling
+from bot.db.database import engine, AsyncSessionLocal
 from bot.handlers import (
     start, catalog, cart, checkout, admin, profile,
     referral, role_management, webhook_management, maintenance, log_handlers
@@ -136,42 +35,15 @@ logger = logging.getLogger(__name__)
 IS_FLY_IO = os.getenv('FLY_APP_NAME') is not None
 logger.info(f"Fly.io muhiti: {IS_FLY_IO}")
 
-# MUHIM: Database URL ni to'g'ri sozlash
+# MUHIM: Database URL ni tekshirish
 if IS_FLY_IO:
-    # Fly.io da volume'dan foydalanish
     DATA_DIR = '/data'
-    # Papkani yaratish (agar mavjud bo'lmasa)
     os.makedirs(DATA_DIR, exist_ok=True)
     logger.info(f"Data papkasi: {DATA_DIR} - mavjudmi: {os.path.exists(DATA_DIR)}")
-    
-    # DATABASE_URL ni secretdan olish
-    DATABASE_URL = os.getenv('DATABASE_URL', f"sqlite+aiosqlite:///{DATA_DIR}/database.sqlite3")
-    
-    # Agar DATABASE_URL sqlite:// bilan boshlansa, uni to'g'rilash
-    if DATABASE_URL.startswith('sqlite://'):
-        DATABASE_URL = DATABASE_URL.replace('sqlite://', 'sqlite+aiosqlite://', 1)
-        logger.info("DATABASE_URL sqlite:// dan sqlite+aiosqlite:// ga o'zgartirildi")
-else:
-    # Mahalliy muhit
-    DATABASE_URL = "sqlite+aiosqlite:///./database.sqlite3"
 
+# Database URL ni data.py dan olamiz, bu yerda qayta yaratish shart emas
+from bot.data import DATABASE_URL
 logger.info(f"Database URL: {DATABASE_URL}")
-
-# Database engine yaratish
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=True,  # SQL loglarini ko'rish uchun
-    future=True,
-    pool_pre_ping=True,  # Ulanishni tekshirish
-    connect_args={"check_same_thread": False} if 'sqlite' in DATABASE_URL else {}
-)
-
-# Session factory
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    expire_on_commit=False,
-    # class_=AsyncSessionLocal
-)
 
 # Bot setup
 bot = Bot(
@@ -217,6 +89,13 @@ async def on_startup():
             result = await conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
             tables = result.fetchall()
             logger.info(f"   Jadvallar: {[t[0] for t in tables]}")
+            
+            # MUHIM: users jadvali borligini tekshirish
+            if 'users' in [t[0] for t in tables]:
+                logger.info("✅ users jadvali mavjud")
+            else:
+                logger.error("❌ users jadvali yaratilmadi!")
+                
         logger.info("✅ Database jadvallari muvaffaqiyatli yaratildi")
         
         # 2. Bot komandalarini o'rnatish
@@ -273,7 +152,7 @@ async def on_shutdown():
         await bot.session.close()
         logger.info("✅ Bot session yopildi")
         
-        # 3. Databse engine ni yopish
+        # 3. Database engine ni yopish
         logger.info("3. Database engine yopilmoqda...")
         await engine.dispose()
         logger.info("✅ Database engine yopildi")
@@ -308,25 +187,16 @@ def check_environment():
     """Muhit o'zgaruvchilarini tekshirish"""
     logger.info("🌍 MUHIT O'ZGARUVCHILARI TEKSHIRILMOQDA...")
     
-    required_vars = ['BOT_TOKEN']
-    optional_vars = ['ADMIN_IDS', 'OWNER_ID', 'DATABASE_URL']
+    if not BOT_TOKEN:
+        logger.error("❌ BOT_TOKEN topilmadi!")
+        return False
     
-    for var in required_vars:
-        if not os.getenv(var):
-            logger.error(f"❌ {var} muhit o'zgaruvchisi topilmadi!")
-            return False
-        else:
-            logger.info(f"✅ {var} mavjud")
-    
-    for var in optional_vars:
-        if os.getenv(var):
-            logger.info(f"✅ {var} mavjud")
-        else:
-            logger.info(f"ℹ️ {var} mavjud emas (default ishlatiladi)")
+    logger.info(f"✅ BOT_TOKEN mavjud")
+    logger.info(f"✅ OWNER_ID: {OWNER_ID}")
+    logger.info(f"✅ ADMIN_IDS: {ADMIN_IDS}")
     
     # Fly.io maxsus tekshiruv
     if IS_FLY_IO:
-        # Volume mavjudligini tekshirish
         data_dir = '/data'
         if os.path.exists(data_dir):
             logger.info(f"✅ Volume {data_dir} mavjud")

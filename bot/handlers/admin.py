@@ -408,8 +408,12 @@ async def broadcast_text_and_document_step2(message: types.Message, state: FSMCo
 async def get_all_users():
     """Barcha foydalanuvchilarning telegram_id larini qaytaradi"""
     async with AsyncSessionLocal() as session:
+        from bot.data import OWNER_ID
         result = await session.execute(select(User.telegram_id))
-        return [row[0] for row in result.all()]
+        all_users=[row[0] for row in result.all()]
+        if OWNER_ID in all_users:
+            all_users.remove(OWNER_ID)
+        return all_users
 
 @router.callback_query(F.data == "broadcast_confirm")
 async def broadcast_confirm(callback: CallbackQuery, state: FSMContext):
