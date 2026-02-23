@@ -10,14 +10,16 @@ class User(Base):
     telegram_id = Column(BigInteger, unique=True, nullable=False)
     full_name = Column(String(255))
     phone_number = Column(String(20), nullable=True)  # Telefon raqam
+    is_phone_verified = Column(Boolean, default=False)  # Yangi ustun - telefon tasdiqlanganmi
     username = Column(String(100), nullable=True)
-    phone = Column(String(20), nullable=True)
+    phone = Column(String(20), nullable=True)  # Eski phone ustuni (agar kerak bo'lsa)
     role = Column(String(50), default="guest")  # owner, admin, manager, worker, diller, dastafka, guest
     balance = Column(Float, default=0.0)
     referrals_count = Column(Integer, default=0)
     referrer_telegram_id = Column(BigInteger, nullable=True)
     blocked = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)  # Yangi ustun
 
     # To'g'rilangan relationship - user_id orqali bog'lanish
     orders = relationship("Order", back_populates="user", foreign_keys="Order.user_id")
