@@ -9,6 +9,7 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     telegram_id = Column(BigInteger, unique=True, nullable=False)
     full_name = Column(String(255))
+    phone_number = Column(String(20), nullable=True)  # Telefon raqam
     username = Column(String(100), nullable=True)
     phone = Column(String(20), nullable=True)
     role = Column(String(50), default="guest")  # owner, admin, manager, worker, diller, dastafka, guest
@@ -62,15 +63,20 @@ class OrderItem(Base):
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
 
+# CustomOrder modeliga qo'shimcha ustunlar
 class CustomOrder(Base):
-    __tablename__ = "custom_orders"
-    id = Column(Integer, primary_key=True)
-    user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
-    product_name = Column(String(200), nullable=False)
+    __tablename__ = 'custom_orders'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, nullable=False)
+    product_name = Column(String(255), nullable=False)
     quantity = Column(Float, nullable=False)
-    unit = Column(String(20), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    user = relationship("User", back_populates="custom_orders")
+    unit = Column(String(50), nullable=False)
+    phone_number = Column(String(20), nullable=True)  # Yangi
+    location = Column(String(500), nullable=True)     # Yangi
+    location_coords = Column(String(100), nullable=True)  # Yangi
+    status = Column(String(50), default='pending')    # Yangi
+    created_at = Column(DateTime, default=datetime.now)
 
 class Message(Base):
     __tablename__ = "messages"
