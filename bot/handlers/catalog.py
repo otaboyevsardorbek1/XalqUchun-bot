@@ -139,7 +139,7 @@ async def product_detail(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(
         f"📦 *{product.name}*\n\n"
         f"💰 Narxi: {product.price} so'm\n"
-        f"📝 {product.description or 'Ta\'rif mavjud emas'}\n\n"
+        f"📝 {product.description or 'Tarif mavjud emas'}\n\n"
         "Miqdorni tanlang:",
         parse_mode="Markdown",
         reply_markup=kb
