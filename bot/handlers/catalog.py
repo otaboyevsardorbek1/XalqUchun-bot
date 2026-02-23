@@ -300,13 +300,13 @@ async def custom_confirm_yes(callback: CallbackQuery, state: FSMContext):
                 session.add(custom_order)
             await session.commit()
         await callback.message.edit_text(
-        "✅ Buyurtmangiz qabul qilindi va savatga qo'shildi!\n"
+        "✅ Buyurtmangiz  savatga qo'shildi!\n"
         "Savatni ko'rish uchun 🛒 Savat tugmasini bosing.")
         await callback.message.answer("Asosiy menyu:", reply_markup=main_menu)
     except Exception as e:
         logger.error(f"Maxsus buyurtmani bazaga saqlashda xato: {e}")
         await callback.message.edit_text(
-        "✅ Buyurtmangiz qabul qilindi va savatga qo'shildi!\n"
+        "✅ Buyurtmangiz  savatga qo'shildi!\n"
         "Savatni ko'rish uchun 🛒 Savat tugmasini bosing.")
         await callback.message.answer("Asosiy menyu:", reply_markup=main_menu)
 
