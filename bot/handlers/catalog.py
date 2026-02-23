@@ -32,6 +32,14 @@ async def get_or_create_user(session, telegram_id: int, full_name: str = None, u
     
     return user
 
+async def update_user_phone(session, telegram_id: int, phone_number: str):
+    """Foydalanuvchi telefon raqamini yangilash"""
+    await session.execute(
+        update(User)
+        .where(User.telegram_id == telegram_id)
+        .values(phone_number=phone_number, is_phone_verified=True)  # is_phone_verified ustuni kerak
+    )
+    await session.commit()
 # Foydalanuvchi telefon raqamini yangilash
 async def update_user_phone(session, telegram_id: int, phone_number: str):
     """Foydalanuvchi telefon raqamini yangilash"""
