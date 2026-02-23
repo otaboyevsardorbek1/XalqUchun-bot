@@ -4,17 +4,20 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, CallbackQuery
 from sqlalchemy import select
 from typing import Union
+import asyncio
 from bot.keyboards.main import main_menu
 from bot.db.database import AsyncSessionLocal
 from bot.db.models import User, Order, OrderItem, Product
 from bot.states.checkout import Checkout
 from bot.utils.cart import get_cart, clear_cart
+from bot.utils.chat_action import ChatActionSender, Actions, with_typing_action,Actions, with_typing_action, send_typing_action, send_find_location_action
 from bot.data import ADMIN_IDS
 
 router = Router()
 
 @router.callback_query(F.data == "checkout")
 @router.message(F.text == "✅ Buyurtma berish")
+@with_typing_action
 async def start_checkout(event: Union[types.Message, CallbackQuery], state: FSMContext):
     user_id = event.from_user.id
     cart = get_cart(user_id)
@@ -41,6 +44,7 @@ async def start_checkout(event: Union[types.Message, CallbackQuery], state: FSMC
         await event.answer("Iltimos, telefon raqamingizni yuboring:", reply_markup=kb)
 
 @router.message(Checkout.waiting_for_phone, F.contact)
+@with_typing_action
 async def get_phone(message: types.Message, state: FSMContext):
     phone = message.contact.phone_number
     await state.update_data(phone=phone)
@@ -54,6 +58,9 @@ async def get_phone(message: types.Message, state: FSMContext):
 
 @router.message(Checkout.waiting_for_location, F.location)
 async def get_location(message: types.Message, state: FSMContext):
+    # Find location action yuborish
+    await send_find_location_action(message.bot, message.chat.id)
+    
     lat = message.location.latitude
     lon = message.location.longitude
     location_link = f"https://www.google.com/maps?q={lat},{lon}"
@@ -98,6 +105,7 @@ async def get_location(message: types.Message, state: FSMContext):
     await state.set_state(Checkout.confirming)
 
 @router.callback_query(StateFilter(Checkout.confirming), F.data == "confirm_order")
+@with_typing_action
 async def confirm_order(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     cart = data['cart']
@@ -153,7 +161,6 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
     # Adminlarga xabar yuborish
-    # Mahsulot nomlarini olish (oddiy mahsulotlar uchun)
     product_ids = [pid for pid in cart.keys() if pid > 0]
     products = {}
     if product_ids:
@@ -170,16 +177,13 @@ async def confirm_order(callback: CallbackQuery, state: FSMContext):
         f"-------------------\n"
         f"Vaqt: {order.created_at.strftime('%Y-%m-%d %H:%M:%S')}\n"
     )
-    total = 0
     for pid, item in cart.items():
         if pid > 0:
             name = products.get(pid, "Noma'lum")
             subtotal = item['qty'] * item['price']
             admin_text += f"{name} x{item['qty']} = {subtotal} so'm\n"
-            total += subtotal
         else:
             admin_text += f"📦 {item['name']} x{item['qty']} {item['unit']} (maxsus)\n"
-    # admin_text += f"Jami: {total} so'm"
 
     for admin_id in ADMIN_IDS:
         try:

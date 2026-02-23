@@ -9,7 +9,7 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 from sqlalchemy import text
-
+from bot.middlewares.chat_action import ChatActionMiddleware
 from bot.data import ALL_OWNER_IDS, BOT_TOKEN, ADMIN_IDS, OWNER_ID
 from bot.db.base import Base
 # MUHIM: database.py dan engine va AsyncSessionLocal ni import qiling
@@ -73,7 +73,8 @@ dp.message.middleware(RoleAccessMiddleware())
 dp.callback_query.middleware(ErrorReporterMiddleware(bot, ADMIN_IDS + [OWNER_ID]))
 dp.callback_query.middleware(MaintenanceMiddleware())
 dp.callback_query.middleware(RoleAccessMiddleware())
-
+dp.message.middleware(ChatActionMiddleware())  # Yangi middleware
+dp.callback_query.middleware(ChatActionMiddleware())  # Yangi middleware
 async def on_startup():
     """Bot ishga tushganda bajariladigan funksiyalar"""
     logger.info("=" * 50)
