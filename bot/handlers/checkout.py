@@ -10,7 +10,8 @@ from bot.db.database import AsyncSessionLocal
 from bot.db.models import User, Order, OrderItem, Product
 from bot.states.checkout import Checkout
 from bot.utils.cart import get_cart, clear_cart
-from bot.utils.chat_action import ChatActionSender, Actions, with_typing_action,Actions, with_typing_action, send_typing_action, send_find_location_action
+# Import qismi to'g'ri:
+from bot.utils.chat_action import with_typing_action, send_find_location_action
 from bot.data import ADMIN_IDS
 
 router = Router()

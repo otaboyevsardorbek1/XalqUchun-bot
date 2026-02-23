@@ -10,7 +10,9 @@ from bot.db.models import Category, Product, CustomOrder, User
 from bot.keyboards.catalog import categories_kb, products_kb
 from bot.states.checkout import AddToCart, CustomOrder as CustomOrderState
 from bot.utils.cart import add_to_cart, get_next_custom_id
-from bot.utils.chat_action import send_typing_action,ChatActionSender, Actions, with_typing_action
+# Import qismi to'g'ri:
+from bot.utils.chat_action import ChatActionSender, Actions, with_typing_action, send_typing_action
+
 import logging
 
 router = Router()

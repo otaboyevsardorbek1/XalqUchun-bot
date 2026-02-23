@@ -1,8 +1,9 @@
-# bot/utils/chat_actions.py
+# bot/utils/chat_action.py
 from aiogram import Bot
-from aiogram.types import ChatActions
+from aiogram.enums import ChatAction
 import asyncio
 import logging
+from functools import wraps
 
 logger = logging.getLogger(__name__)
 
@@ -43,20 +44,20 @@ class ChatActionSender:
 
 # Action turlari
 class Actions:
-    TYPING = "typing"  # Yozmoqda
-    UPLOAD_PHOTO = "upload_photo"  # Rasm yuklamoqda
-    UPLOAD_VIDEO = "upload_video"  # Video yuklamoqda
-    UPLOAD_DOCUMENT = "upload_document"  # Hujjat yuklamoqda
-    FIND_LOCATION = "find_location"  # Lokatsiya izlamoqda
-    RECORD_VIDEO = "record_video"  # Video yozmoqda
-    RECORD_VOICE = "record_voice"  # Ovoz yozmoqda
-    CHOOSE_STICKER = "choose_sticker"  # Sticker tanlamoqda
+    TYPING = ChatAction.TYPING
+    UPLOAD_PHOTO = ChatAction.UPLOAD_PHOTO
+    UPLOAD_VIDEO = ChatAction.UPLOAD_VIDEO
+    UPLOAD_DOCUMENT = ChatAction.UPLOAD_DOCUMENT
+    FIND_LOCATION = ChatAction.FIND_LOCATION
+    RECORD_VIDEO = ChatAction.RECORD_VIDEO
+    RECORD_VOICE = ChatAction.RECORD_VOICE
+    CHOOSE_STICKER = ChatAction.CHOOSE_STICKER
 
 # Yordamchi funksiyalar
 async def send_typing_action(bot: Bot, chat_id: int, duration: float = 2.0):
     """Bir marta typing action yuborish"""
     try:
-        await bot.send_chat_action(chat_id=chat_id, action=Actions.TYPING)
+        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
         await asyncio.sleep(duration)
     except Exception as e:
         logger.error(f"Typing action yuborishda xato: {e}")
@@ -64,7 +65,7 @@ async def send_typing_action(bot: Bot, chat_id: int, duration: float = 2.0):
 async def send_upload_photo_action(bot: Bot, chat_id: int, duration: float = 2.0):
     """Bir marta upload photo action yuborish"""
     try:
-        await bot.send_chat_action(chat_id=chat_id, action=Actions.UPLOAD_PHOTO)
+        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
         await asyncio.sleep(duration)
     except Exception as e:
         logger.error(f"Upload photo action yuborishda xato: {e}")
@@ -72,27 +73,38 @@ async def send_upload_photo_action(bot: Bot, chat_id: int, duration: float = 2.0
 async def send_find_location_action(bot: Bot, chat_id: int, duration: float = 2.0):
     """Bir marta find location action yuborish"""
     try:
-        await bot.send_chat_action(chat_id=chat_id, action=Actions.FIND_LOCATION)
+        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.FIND_LOCATION)
         await asyncio.sleep(duration)
     except Exception as e:
         logger.error(f"Find location action yuborishda xato: {e}")
 
-# Decorator yordamida action qo'shish
+# SODDALASHTIRILGAN DEKORATOR - asosiy tuzatish shu yerda
 def with_typing_action(func):
     """Handlerlarni typing action bilan o'rash uchun decorator"""
-    async def wrapper(*args, **kwargs):
-        # Message yoki CallbackQuery dan chat_id ni olish
-        event = args[0]
-        if hasattr(event, 'message'):
+    @wraps(func)
+    async def wrapper(event, *args, **kwargs):
+        # Bot ni olish
+        bot = None
+        chat_id = None
+        
+        # Event dan bot va chat_id ni olish
+        if hasattr(event, 'bot'):
+            bot = event.bot
+        
+        if hasattr(event, 'message') and event.message:
             chat_id = event.message.chat.id
-            bot = event.bot if hasattr(event, 'bot') else kwargs.get('bot')
-        else:
+        elif hasattr(event, 'chat'):
             chat_id = event.chat.id
-            bot = event.bot if hasattr(event, 'bot') else kwargs.get('bot')
         
         if bot and chat_id:
-            async with ChatActionSender(bot, chat_id, Actions.TYPING):
-                return await func(*args, **kwargs)
-        else:
-            return await func(*args, **kwargs)
+            # Typing action yuborish
+            try:
+                await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+                await asyncio.sleep(1)  # 1 soniya kutish
+            except Exception as e:
+                logger.error(f"Typing action yuborishda xato: {e}")
+        
+        # Asl handler funksiyasini chaqirish
+        return await func(event, *args, **kwargs)
+    
     return wrapper
