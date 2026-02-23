@@ -1,3 +1,4 @@
+# bot/data.py
 import os
 import json
 import logging
@@ -32,6 +33,9 @@ try:
     # Agar vergul bo'lsa, birinchi qiymatni olish
     if ',' in owner_id_str:
         owner_id_str = owner_id_str.split(',')[0].strip()
+    # '#' dan keyingi izohni olib tashlash
+    if '#' in owner_id_str:
+        owner_id_str = owner_id_str.split('#')[0].strip()
     OWNER_ID = int(owner_id_str)
 except (ValueError, TypeError) as e:
     logger.error(f"OWNER_ID xato: {e}")
@@ -49,13 +53,25 @@ if admin_ids_str:
             ADMIN_IDS = json.loads(admin_ids_str)
         else:
             # Vergul bilan ajratilgan format
-            ADMIN_IDS = [int(x.strip()) for x in admin_ids_str.split(',') if x.strip()]
+            # Avval '#' dan keyingi izohni olib tashlash
+            if '#' in admin_ids_str:
+                admin_ids_str = admin_ids_str.split('#')[0].strip()
+            
+            # Har bir qiymatni tozalash va int ga o'tkazish
+            ADMIN_IDS = []
+            for x in admin_ids_str.split(','):
+                x = x.strip()
+                if x:  # Bo'sh bo'lmasa
+                    try:
+                        ADMIN_IDS.append(int(x))
+                    except ValueError:
+                        logger.warning(f"Noto'g'ri ADMIN_ID: {x}")
     except Exception as e:
         logger.error(f"ADMIN_IDS parse qilishda xato: {e}")
-        ADMIN_IDS = [1838866117]  # Default
+        ADMIN_IDS = [1838866117, 6684122507]  # Default
 else:
     # Default adminlar
-    ADMIN_IDS = [1838866117,6684122507]
+    ADMIN_IDS = [1838866117, 6684122507]
 
 # ---------------------- ALL OWNER IDS ----------------------
 ALL_OWNER_IDS = list(set([OWNER_ID] + ADMIN_IDS))  # set() takrorlanuvchilarni olib tashlaydi

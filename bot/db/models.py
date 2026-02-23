@@ -19,11 +19,12 @@ class User(Base):
     blocked = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    orders = relationship("Order", back_populates="user")
-    custom_orders = relationship("CustomOrder", back_populates="user")
-    sent_messages = relationship("Message", foreign_keys="Message.sender_telegram_id")
-    received_messages = relationship("Message", foreign_keys="Message.receiver_telegram_id")
-    transactions = relationship("Transaction", back_populates="user")
+    # To'g'rilangan relationship - user_id orqali bog'lanish
+    orders = relationship("Order", back_populates="user", foreign_keys="Order.user_id")
+    custom_orders = relationship("CustomOrder", back_populates="user", foreign_keys="CustomOrder.user_id")
+    sent_messages = relationship("Message", foreign_keys="Message.sender_telegram_id", back_populates="sender")
+    received_messages = relationship("Message", foreign_keys="Message.receiver_telegram_id", back_populates="receiver")
+    transactions = relationship("Transaction", back_populates="user", foreign_keys="Transaction.user_telegram_id")
 
 class Category(Base):
     __tablename__ = "categories"
@@ -36,6 +37,7 @@ class Product(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(200), nullable=False)
     price = Column(Float, nullable=False)
+    description = Column(Text, nullable=True)  # description qo'shildi
     category_id = Column(Integer, ForeignKey("categories.id"))
     category = relationship("Category", back_populates="products")
     order_items = relationship("OrderItem", back_populates="product")
@@ -48,7 +50,7 @@ class Order(Base):
     location_link = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     status = Column(String(50), default="new")
-    user = relationship("User", back_populates="orders")
+    user = relationship("User", back_populates="orders", foreign_keys=[user_id])
     items = relationship("OrderItem", back_populates="order")
 
 class OrderItem(Base):
@@ -63,20 +65,23 @@ class OrderItem(Base):
     order = relationship("Order", back_populates="items")
     product = relationship("Product")
 
-# CustomOrder modeliga qo'shimcha ustunlar
+# CustomOrder modeliga qo'shimcha ustunlar va to'g'ri relationship
 class CustomOrder(Base):
     __tablename__ = 'custom_orders'
     
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(BigInteger, nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users.telegram_id"), nullable=False)  # ForeignKey qo'shildi
     product_name = Column(String(255), nullable=False)
     quantity = Column(Float, nullable=False)
     unit = Column(String(50), nullable=False)
-    phone_number = Column(String(20), nullable=True)  # Yangi
-    location = Column(String(500), nullable=True)     # Yangi
-    location_coords = Column(String(100), nullable=True)  # Yangi
-    status = Column(String(50), default='pending')    # Yangi
+    phone_number = Column(String(20), nullable=True)
+    location = Column(String(500), nullable=True)
+    location_coords = Column(String(100), nullable=True)
+    status = Column(String(50), default='pending')
     created_at = Column(DateTime, default=datetime.now)
+    
+    # User bilan bog'lanish
+    user = relationship("User", back_populates="custom_orders", foreign_keys=[user_id])
 
 class Message(Base):
     __tablename__ = "messages"
@@ -87,8 +92,8 @@ class Message(Base):
     message_type = Column(String(50), default="text")
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    sender = relationship("User", foreign_keys=[sender_telegram_id], overlaps="sent_messages")
-    receiver = relationship("User", foreign_keys=[receiver_telegram_id], overlaps="received_messages")
+    sender = relationship("User", foreign_keys=[sender_telegram_id], back_populates="sent_messages")
+    receiver = relationship("User", foreign_keys=[receiver_telegram_id], back_populates="received_messages")
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -102,4 +107,5 @@ class Transaction(Base):
     processed_at = Column(DateTime, nullable=True)
     admin_telegram_id = Column(BigInteger, nullable=True)
     note = Column(Text, nullable=True)
-    user = relationship("User", back_populates="transactions")
+    
+    user = relationship("User", back_populates="transactions", foreign_keys=[user_telegram_id])

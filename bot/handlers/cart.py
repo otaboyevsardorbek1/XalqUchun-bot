@@ -4,9 +4,8 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
 import re
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
-from bot.utils.cart import get_cart, remove_from_cart, update_cart_item_qty
-from bot.db.models import Product
+from bot.utils.cart import get_cart, remove_from_cart, update_cart_item_qty, clear_cart
+from bot.db.models import User, Product
 from bot.db.database import AsyncSessionLocal
 from bot.keyboards.cart import cart_kb
 from bot.keyboards.main import main_menu
