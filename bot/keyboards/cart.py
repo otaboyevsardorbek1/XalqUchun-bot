@@ -4,6 +4,8 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardBut
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import select, update
 import asyncio
+from typing import Union
+from aiogram.types import Message, CallbackQuery
 from bot.keyboards.main import get_main_menu, get_back_button
 from bot.keyboards.catalog import categories_kb, products_kb, product_detail_kb
 from bot.db.database import AsyncSessionLocal
@@ -68,7 +70,7 @@ async def get_user_phone(session, telegram_id: int):
 @router.message(F.text == "🛍 Katalog")
 @router.callback_query(F.data == "show_catalog")
 @with_typing_action
-async def show_categories(event: types.Message or CallbackQuery):
+async def show_categories(event: Union[Message, CallbackQuery]):
     """Kategoriyalarni ko'rsatish"""
     try:
         async with AsyncSessionLocal() as session:

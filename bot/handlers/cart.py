@@ -4,9 +4,10 @@ from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardBut
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 from sqlalchemy import select
-from typing import Union
 import re
 from bot.keyboards.main import get_main_menu, get_back_button
+from typing import Union
+from aiogram.types import Message, CallbackQu
 from bot.keyboards.cart import cart_kb, edit_custom_item_kb
 from bot.db.database import AsyncSessionLocal
 from bot.db.models import Product
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 @router.message(F.text == "🛒 Savat")
 @router.callback_query(F.data == "view_cart")
 @with_typing_action
-async def show_cart(event: types.Message or CallbackQuery, state: FSMContext = None):
+async def show_cart(event: Union[Message, CallbackQuery], state: FSMContext = None):
     """Savatni ko'rsatish"""
     try:
         user_id = event.from_user.id

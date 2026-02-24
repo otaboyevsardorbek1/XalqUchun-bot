@@ -6,6 +6,8 @@ from aiogram.fsm.context import FSMContext
 from sqlalchemy import select, func, and_, desc
 from sqlalchemy.orm import selectinload
 from datetime import datetime, timedelta
+from typing import Union
+from aiogram.types import Message, CallbackQuery
 import re
 import asyncio
 import csv
@@ -21,6 +23,8 @@ from bot.data import ADMIN_IDS, OWNER_ID, ALL_OWNER_IDS
 from bot.db.database import AsyncSessionLocal
 from bot.db.models import Order, OrderItem, User, Transaction, Product, Category
 import logging
+
+MAINTENANCE_MODE = False  # Global flag - bu o'zgaruvchi admin_settings orqali o'zgartiriladi
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -76,7 +80,7 @@ Kerakli bo'limni tanlang:
 
 @router.message(Command("orders"))
 @router.callback_query(F.data == "admin_orders")
-async def list_orders(event: types.Message or CallbackQuery):
+async def list_orders(event: Union[ Message ,CallbackQuery]):
     """Buyurtmalar ro'yxati"""
     if not is_admin(event.from_user.id):
         if isinstance(event, types.Message):
@@ -1026,10 +1030,9 @@ async def admin_toggle_maintenance(callback: CallbackQuery):
         await callback.answer("❌ Faqat owner bu amalni bajarishi mumkin!", show_alert=True)
         return
     
-    from bot.middlewares.maintenance import MAINTENANCE_MODE
-    
-    # Global o'zgaruvchini o'zgartirish
     global MAINTENANCE_MODE
+    from bot.middlewares.maintenance import MAINTENANCE_MODE as imported_maintenance
+    
     MAINTENANCE_MODE = not MAINTENANCE_MODE
     
     status = "YOQILDI" if MAINTENANCE_MODE else "O'CHIRILDI"

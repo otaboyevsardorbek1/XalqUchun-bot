@@ -6,6 +6,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy import select
 from bot.keyboards.main import get_main_menu, get_back_button
+from aiogram.types import Message, CallbackQuery
+from typing import Union
 from bot.db.database import AsyncSessionLocal
 from bot.db.models import User, Transaction
 from bot.utils.referral import get_user_by_tid
@@ -21,7 +23,7 @@ class ProfileState(StatesGroup):
 
 @router.message(Command("profile"))
 @router.callback_query(F.data == "view_profile")
-async def cmd_profile(event: types.Message or types.CallbackQuery):
+async def cmd_profile(event:Union[ Message ,CallbackQuery]):
     """Profil ma'lumotlarini ko'rsatish"""
     try:
         user_id = event.from_user.id
