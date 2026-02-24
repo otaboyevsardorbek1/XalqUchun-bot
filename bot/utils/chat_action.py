@@ -4,6 +4,8 @@ from aiogram.enums import ChatAction
 import asyncio
 import logging
 from functools import wraps
+from typing import Union, Optional
+from aiogram.types import Message, CallbackQuery
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +17,7 @@ class ChatActionSender:
         self.chat_id = chat_id
         self.action = action
         self.interval = interval
-        self._task = None
+        self._task: Optional[asyncio.Task] = None
         self._running = False
     
     async def __aenter__(self):
@@ -25,7 +27,7 @@ class ChatActionSender:
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         self._running = False
-        if self._task:
+        if self._task and not self._task.done():
             self._task.cancel()
             try:
                 await self._task
@@ -42,8 +44,8 @@ class ChatActionSender:
                 logger.error(f"Chat action yuborishda xato: {e}")
                 break
 
-# Action turlari
 class Actions:
+    """Chat action turlari"""
     TYPING = ChatAction.TYPING
     UPLOAD_PHOTO = ChatAction.UPLOAD_PHOTO
     UPLOAD_VIDEO = ChatAction.UPLOAD_VIDEO
@@ -53,58 +55,52 @@ class Actions:
     RECORD_VOICE = ChatAction.RECORD_VOICE
     CHOOSE_STICKER = ChatAction.CHOOSE_STICKER
 
-# Yordamchi funksiyalar
-async def send_typing_action(bot: Bot, chat_id: int, duration: float = 2.0):
-    """Bir marta typing action yuborish"""
+async def send_action(
+    bot: Bot, 
+    chat_id: int, 
+    action: str, 
+    duration: float = 2.0
+) -> None:
+    """Bir marta action yuborish"""
     try:
-        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-        await asyncio.sleep(duration)
+        await bot.send_chat_action(chat_id=chat_id, action=action)
+        if duration > 0:
+            await asyncio.sleep(duration)
     except Exception as e:
-        logger.error(f"Typing action yuborishda xato: {e}")
+        logger.error(f"Action yuborishda xato: {e}")
+
+async def send_typing_action(bot: Bot, chat_id: int, duration: float = 2.0):
+    await send_action(bot, chat_id, ChatAction.TYPING, duration)
 
 async def send_upload_photo_action(bot: Bot, chat_id: int, duration: float = 2.0):
-    """Bir marta upload photo action yuborish"""
-    try:
-        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
-        await asyncio.sleep(duration)
-    except Exception as e:
-        logger.error(f"Upload photo action yuborishda xato: {e}")
+    await send_action(bot, chat_id, ChatAction.UPLOAD_PHOTO, duration)
 
 async def send_find_location_action(bot: Bot, chat_id: int, duration: float = 2.0):
-    """Bir marta find location action yuborish"""
-    try:
-        await bot.send_chat_action(chat_id=chat_id, action=ChatAction.FIND_LOCATION)
-        await asyncio.sleep(duration)
-    except Exception as e:
-        logger.error(f"Find location action yuborishda xato: {e}")
+    await send_action(bot, chat_id, ChatAction.FIND_LOCATION, duration)
 
-# SODDALASHTIRILGAN DEKORATOR - asosiy tuzatish shu yerda
 def with_typing_action(func):
     """Handlerlarni typing action bilan o'rash uchun decorator"""
     @wraps(func)
-    async def wrapper(event, *args, **kwargs):
-        # Bot ni olish
+    async def wrapper(event: Union[Message, CallbackQuery], *args, **kwargs):
         bot = None
         chat_id = None
         
-        # Event dan bot va chat_id ni olish
+        # Bot va chat_id ni olish
         if hasattr(event, 'bot'):
             bot = event.bot
         
-        if hasattr(event, 'message') and event.message:
-            chat_id = event.message.chat.id
-        elif hasattr(event, 'chat'):
+        if isinstance(event, Message):
             chat_id = event.chat.id
+        elif isinstance(event, CallbackQuery) and event.message:
+            chat_id = event.message.chat.id
         
+        # Typing action yuborish
         if bot and chat_id:
-            # Typing action yuborish
             try:
                 await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
-                await asyncio.sleep(1)  # 1 soniya kutish
             except Exception as e:
                 logger.error(f"Typing action yuborishda xato: {e}")
         
-        # Asl handler funksiyasini chaqirish
         return await func(event, *args, **kwargs)
     
     return wrapper

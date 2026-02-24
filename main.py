@@ -1,4 +1,4 @@
-# main.py faylining import qismini o'zgartiring
+# main.py
 import sys
 import os
 import asyncio
@@ -9,10 +9,9 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 from sqlalchemy import text
-# from bot.middlewares.chat_action import ChatActionMiddleware
-from bot.data import ALL_OWNER_IDS, BOT_TOKEN, ADMIN_IDS, OWNER_ID
+
+from bot.data import ALL_OWNER_IDS, BOT_TOKEN, ADMIN_IDS, OWNER_ID, IS_FLY_IO, DATABASE_URL
 from bot.db.base import Base
-# MUHIM: database.py dan engine va AsyncSessionLocal ni import qiling
 from bot.db.database import engine
 from bot.handlers import (
     start, catalog, cart, checkout, admin, profile,
@@ -31,19 +30,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# MUHIM: Fly.io muhitini aniqlash
-IS_FLY_IO = os.getenv('FLY_APP_NAME') is not None
-logger.info(f"Fly.io muhiti: {IS_FLY_IO}")
-
-# MUHIM: Database URL ni tekshirish
+# Fly.io uchun ma'lumotlar papkasi
 if IS_FLY_IO:
     DATA_DIR = '/data'
     os.makedirs(DATA_DIR, exist_ok=True)
-    logger.info(f"Data papkasi: {DATA_DIR} - mavjudmi: {os.path.exists(DATA_DIR)}")
+    logger.info(f"✅ Data papkasi: {DATA_DIR}")
 
-# Database URL ni data.py dan olamiz, bu yerda qayta yaratish shart emas
-from bot.data import DATABASE_URL
-logger.info(f"Database URL: {DATABASE_URL}")
+logger.info(f"📂 Database: {DATABASE_URL}")
 
 # Bot setup
 bot = Bot(
@@ -53,7 +46,7 @@ bot = Bot(
 storage = MemoryStorage()
 dp = Dispatcher(storage=storage)
 
-# Register routers
+# Routerlarni ulash
 dp.include_router(start.router)
 dp.include_router(catalog.router)
 dp.include_router(cart.router)
@@ -66,7 +59,7 @@ dp.include_router(webhook_management.router)
 dp.include_router(maintenance.router)
 dp.include_router(log_handlers.router)
 
-# Register middlewares
+# Middleware larni ulash
 dp.message.middleware(ErrorReporterMiddleware(bot, ADMIN_IDS + [OWNER_ID]))
 dp.message.middleware(MaintenanceMiddleware())
 dp.message.middleware(RoleAccessMiddleware())
@@ -76,90 +69,99 @@ dp.callback_query.middleware(RoleAccessMiddleware())
 
 async def on_startup():
     """Bot ishga tushganda bajariladigan funksiyalar"""
-    logger.info("=" * 50)
-    logger.info("BOT ISHGA TUSHMQODA...")
-    logger.info("=" * 50)
+    logger.info("=" * 60)
+    logger.info("🚀 BOT ISHGA TUSHMOQDA...")
+    logger.info("=" * 60)
     
     try:
         # 1. Database jadvallarini yaratish
-        logger.info("1. Database jadvallari yaratilmoqda...")
+        logger.info("1️⃣ Database jadvallari yaratilmoqda...")
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-            # Database mavjudligini tekshirish
+            
+            # Jadvallarni tekshirish
             result = await conn.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
             tables = result.fetchall()
-            logger.info(f"   Jadvallar: {[t[0] for t in tables]}")
+            logger.info(f"   📋 Jadvallar: {[t[0] for t in tables]}")
             
-            # MUHIM: users jadvali borligini tekshirish
             if 'users' in [t[0] for t in tables]:
-                logger.info("✅ users jadvali mavjud")
+                logger.info("   ✅ users jadvali mavjud")
             else:
-                logger.error("❌ users jadvali yaratilmadi!")
-                
-        logger.info("✅ Database jadvallari muvaffaqiyatli yaratildi")
+                logger.error("   ❌ users jadvali yaratilmadi!")
+        
+        logger.info("   ✅ Database jadvallari tayyor")
         
         # 2. Bot komandalarini o'rnatish
-        logger.info("2. Bot komandalari o'rnatilmoqda...")
+        logger.info("2️⃣ Bot komandalari o'rnatilmoqda...")
         commands = [
-            BotCommand(command="start", description="Botni ishga tushirish"),
-            BotCommand(command="help", description="Yordam"),
-            BotCommand(command="profile", description="Profil"),
+            BotCommand(command="start", description="🚀 Botni ishga tushirish"),
+            BotCommand(command="help", description="❓ Yordam"),
+            BotCommand(command="profile", description="👤 Profil"),
+            BotCommand(command="info", description="📞 Bog'lanish"),
         ]
+        
+        if OWNER_ID in ALL_OWNER_IDS:
+            commands.extend([
+                BotCommand(command="admin", description="👑 Admin panel"),
+                BotCommand(command="orders", description="📦 Buyurtmalar"),
+            ])
+        
         await bot.set_my_commands(commands)
-        logger.info("✅ Bot komandalari muvaffaqiyatli o'rnatildi")
+        logger.info("   ✅ Bot komandalari o'rnatildi")
         
         # 3. Adminlarni xabardor qilish
-        logger.info("3. Adminlar xabardor qilinmoqda...")
+        logger.info("3️⃣ Adminlar xabardor qilinmoqda...")
         await notify_admins_startup(bot)
-        logger.info("✅ Adminlar xabardor qilindi")
+        logger.info("   ✅ Adminlar xabardor qilindi")
         
         # 4. Log faylini tekshirish
-        logger.info("4. Log fayli tekshirilmoqda...")
+        logger.info("4️⃣ Log fayli tekshirilmoqda...")
         asyncio.create_task(check_log_file(bot, OWNER_ID))
-        logger.info("✅ Log fayli tekshirildi")
+        logger.info("   ✅ Log fayli tekshirildi")
         
         # 5. Bot haqida ma'lumot
         bot_info = await bot.get_me()
+        logger.info("=" * 60)
         logger.info(f"🤖 Bot: @{bot_info.username} (ID: {bot_info.id})")
         logger.info(f"👥 Adminlar: {ADMIN_IDS}")
         logger.info(f"👑 Owner: {OWNER_ID}")
-        
-        logger.info("=" * 50)
+        logger.info(f"🌍 Fly.io: {'✅' if IS_FLY_IO else '❌'}")
+        logger.info("=" * 60)
         logger.info("✅ BOT MUVAFFAQIYATLI ISHGA TUSHDI!")
-        logger.info("=" * 50)
+        logger.info("=" * 60)
         
     except Exception as e:
         logger.error(f"❌ Startup xatosi: {e}", exc_info=True)
-        logger.error("=" * 50)
-        logger.error("BOT ISHGA TUSHA OLMADI!")
-        logger.error("=" * 50)
+        logger.error("=" * 60)
+        logger.error("❌ BOT ISHGA TUSHA OLMADI!")
+        logger.error("=" * 60)
         raise
 
 async def on_shutdown():
     """Bot to'xtaganda bajariladigan funksiyalar"""
-    logger.info("=" * 50)
-    logger.info("BOT TO'XTATILMOQDA...")
-    logger.info("=" * 50)
+    logger.info("=" * 60)
+    logger.info("🛑 BOT TO'XTATILMOQDA...")
+    logger.info("=" * 60)
     
     try:
         # 1. Adminlarni xabardor qilish
-        logger.info("1. Adminlar xabardor qilinmoqda...")
+        logger.info("1️⃣ Adminlar xabardor qilinmoqda...")
         await notify_admins_shutdown(bot)
-        logger.info("✅ Adminlar xabardor qilindi")
+        logger.info("   ✅ Adminlar xabardor qilindi")
         
         # 2. Bot sessionni yopish
-        logger.info("2. Bot session yopilmoqda...")
+        logger.info("2️⃣ Bot session yopilmoqda...")
         await bot.session.close()
-        logger.info("✅ Bot session yopildi")
+        logger.info("   ✅ Bot session yopildi")
         
         # 3. Database engine ni yopish
-        logger.info("3. Database engine yopilmoqda...")
+        logger.info("3️⃣ Database engine yopilmoqda...")
         await engine.dispose()
-        logger.info("✅ Database engine yopildi")
+        logger.info("   ✅ Database engine yopildi")
         
-        logger.info("=" * 50)
+        logger.info("=" * 60)
         logger.info("✅ BOT MUVAFFAQIYATLI TO'XTATILDI!")
-        logger.info("=" * 50)
+        logger.info("=" * 60)
         
     except Exception as e:
         logger.error(f"❌ Shutdown xatosi: {e}", exc_info=True)
@@ -184,24 +186,23 @@ async def main():
 
 def check_environment():
     """Muhit o'zgaruvchilarini tekshirish"""
-    logger.info("🌍 MUHIT O'ZGARUVCHILARI TEKSHIRILMOQDA...")
+    logger.info("=" * 60)
+    logger.info("🌍 MUHIT TEKSHIRILMOQDA...")
     
     if not BOT_TOKEN:
         logger.error("❌ BOT_TOKEN topilmadi!")
         return False
     
-    logger.info(f"✅ BOT_TOKEN mavjud")
+    logger.info(f"✅ BOT_TOKEN: {'✅'}")
     logger.info(f"✅ OWNER_ID: {OWNER_ID}")
     logger.info(f"✅ ADMIN_IDS: {ADMIN_IDS}")
     
-    # Fly.io maxsus tekshiruv
     if IS_FLY_IO:
         data_dir = '/data'
         if os.path.exists(data_dir):
             logger.info(f"✅ Volume {data_dir} mavjud")
-            # Yozish huquqini tekshirish
-            test_file = f"{data_dir}/test_write_{os.getpid()}.txt"
             try:
+                test_file = f"{data_dir}/test_{os.getpid()}.txt"
                 with open(test_file, 'w') as f:
                     f.write('test')
                 os.remove(test_file)
@@ -213,17 +214,17 @@ def check_environment():
             logger.error(f"❌ Volume {data_dir} mavjud emas!")
             return False
     
+    logger.info("=" * 60)
     logger.info("✅ MUHIT TEKSHIRUVI MUVAFFAQIYATLI")
+    logger.info("=" * 60)
     return True
 
 if __name__ == "__main__":
     try:
-        # Muhitni tekshirish
         if not check_environment():
             logger.error("❌ Muhit tekshiruvi muvaffaqiyatsiz!")
             sys.exit(1)
         
-        # Asosiy funksiyani ishga tushirish
         asyncio.run(main())
         
     except KeyboardInterrupt:
@@ -232,4 +233,3 @@ if __name__ == "__main__":
         logger.info("👋 Bot tizim tomonidan to'xtatildi")
     except Exception as e:
         logger.error(f"💥 Kritik xato: {e}", exc_info=True)
-        sys.exit(1)

@@ -1,197 +1,240 @@
+# bot/handlers/start.py
 from aiogram import Router, types, F
 from aiogram.filters import Command
-from bot.keyboards.main import main_menu, admin_menu
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from bot.keyboards.main import get_main_menu, get_admin_menu
 from bot.utils.referral import add_user
-from bot.data import ADMIN_IDS, ALL_OWNER_IDS
-from bot.data import BOT_TOKEN
+from bot.data import ADMIN_IDS, ALL_OWNER_IDS, BOT_TOKEN
+from bot.utils.helpers import format_phone_for_display
 import logging
 
 router = Router()
 logger = logging.getLogger(__name__)
 
-async def bot_token_id():
-    """Bot tokenidan bot ID sini olish"""
+WELCOME_MESSAGE = """
+🌟 *XUSH KELIBSIZ!* 🌟
+
+Assalomu alaykum, {name}!
+
+Bizning do'konimizda eng sifatli mahsulotlarni xarid qilishingiz mumkin.
+
+📌 *Qanday buyurtma berish mumkin:*
+1️⃣ 🛍 *Katalog* - kerakli mahsulotni tanlang
+2️⃣ 🔢 *Miqdorni* belgilang
+3️⃣ 🛒 *Savatga* qo'shing
+4️⃣ ✅ *Buyurtma berish* tugmasini bosing
+5️⃣ 📞 Telefon raqamingizni yuboring
+6️⃣ 📍 Joylashuvingizni yuboring
+
+🎁 *Har bir buyurtma uchun bonuslar!*
+
+Qanday yordam kerak? /help
+"""
+
+ADMIN_WELCOME = """
+👑 *ADMIN PANELIGA XUSH KELIBSIZ!* 👑
+
+Sizda quyidagi imkoniyatlar mavjud:
+
+📊 *Buyurtmalarni boshqarish*
+👥 *Foydalanuvchilarni boshqarish*
+💰 *To'lovlarni boshqarish*
+📢 *Ommaviy xabarlar*
+📈 *Statistika*
+
+Asosiy buyruqlar:
+• /orders - Yangi buyurtmalar
+• /users - Foydalanuvchilar
+• /ads - Xabar yuborish
+• /help - To'liq yordam
+"""
+
+async def bot_token_id() -> int:
+    """Bot ID sini olish"""
     try:
-        bot_id_parse = BOT_TOKEN.split(':')[0]
-        return int(bot_id_parse)
+        return int(BOT_TOKEN.split(':')[0])
     except Exception as e:
         logger.error(f"Bot token ID olishda xato: {e}")
-        return None
+        return 0
 
 @router.message(Command("start"))
 async def cmd_start(message: types.Message):
-    """Start komandasi - botni ishga tushirish va foydalanuvchini ro'yxatdan o'tkazish"""
+    """Start komandasi"""
     try:
         args = message.text.split()
-        ref = None
+        referrer_id = None
         
         # Referral ID ni tekshirish
         if len(args) > 1 and args[1].isdigit():
-            ref = int(args[1])
-            await add_user(
-                message.from_user.id,
-                message.from_user.username,
-                message.from_user.full_name, 
-                ref)
-            logger.info(f"Yangi foydalanuvchi referal orqali qo'shildi: {message.from_user.id} (referrer: {ref})")
-        else:
-            ref = await bot_token_id()
-            await add_user(
-                message.from_user.id,
-                message.from_user.username,
-                message.from_user.full_name, 
-                ref)
-            logger.info(f"Yangi foydalanuvchi qo'shildi: {message.from_user.id}")
+            referrer_id = int(args[1])
         
-        # Foydalanuvchi admin yoki oddiy foydalanuvchi ekanligini tekshirish
-        if message.from_user.id in ADMIN_IDS or message.from_user.id in ALL_OWNER_IDS:
-            await message.answer(
-                "👋 *Assalomu alaykum, admin! Xush kelibsiz.*\n\n"
-                "📊 *Admin paneliga xush kelibsiz*\n\n"
-                "🔹 Yangi buyurtmalarni ko'rish uchun /orders\n"
-                "🔹 Foydalanuvchilarni boshqarish uchun /users\n"
-                "🔹 To'liq yordam uchun /help",
-                parse_mode="Markdown",
-                reply_markup=admin_menu
-            )
-        else:
-            await message.answer(
-                "👋 *Assalomu alaykum! Xush kelibsiz.*\n\n"
-                "🛍 *Do'konimizga xush kelibsiz!*\n\n"
-                "✅ *Buyurtma berish uchun:*\n"
-                "1. 🛍 Katalog - mahsulotlarni tanlang\n"
-                "2. 🛒 Savat - tanlangan mahsulotlarni ko'ring\n"
-                "3. ✅ Buyurtma berish - buyurtmani yakunlang\n\n"
-                "📝 *Maxsus buyurtma* - o'zingiz xohlagan mahsulotni buyurtma qiling\n\n"
-                "❓ Yordam uchun /help",
-                parse_mode="Markdown",
-                reply_markup=main_menu
-            )
+        # Foydalanuvchini ro'yxatdan o'tkazish
+        await add_user(
+            message.from_user.id,
+            message.from_user.username,
+            message.from_user.full_name,
+            referrer_id
+        )
+        
+        # Foydalanuvchi adminmi?
+        is_admin = message.from_user.id in ADMIN_IDS or message.from_user.id in ALL_OWNER_IDS
+        
+        # Chiroyli start xabari
+        welcome_text = ADMIN_WELCOME if is_admin else WELCOME_MESSAGE
+        welcome_text = welcome_text.format(name=message.from_user.full_name)
+        
+        # Chiroyli inline tugmalar
+        kb = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🛍 Katalog", callback_data="show_catalog")],
+            [InlineKeyboardButton(text="📝 Maxsus buyurtma", callback_data="custom_order")],
+            [InlineKeyboardButton(text="📞 Bog'lanish", callback_data="contact_info")],
+            [InlineKeyboardButton(text="❓ Yordam", callback_data="help")]
+        ])
+        
+        await message.answer(
+            welcome_text,
+            parse_mode="Markdown",
+            reply_markup=kb
+        )
+        
+        logger.info(f"Foydalanuvchi start: {message.from_user.id}")
+        
     except Exception as e:
         logger.error(f"Start komandasida xato: {e}")
         await message.answer("❌ Xatolik yuz berdi. Iltimos, qayta urinib ko'ring.")
 
-@router.message(F.text == "📞 Biz bilan bogʻlanish")
+@router.message(F.text == "📞 Bog'lanish")
 @router.message(Command("info"))
-async def contact_us(message: types.Message):
+@router.callback_query(F.data == "contact_info")
+async def contact_info(event:types.CallbackQuery):
     """Bog'lanish ma'lumotlari"""
-    await message.answer(
-        "📞 *BIZ BILAN BOG'LANISH*\n\n"
-        "┌─────────────────────\n"
-        "│ 👤 *Admin:* @bbm1311\n"
-        "│ 📱 *Telefon:* +998 95 818 27 28\n"
-        "├─────────────────────\n"
-        "│ 👨‍💻 *Dasturchi:* @prodevuzoff\n"
-        "│ 📱 *Telefon:* +998 91 861 04 70\n"
-        "├─────────────────────\n"
-        "│ ⏰ *Ish vaqti:* 09:00 - 22:00\n"
-        "│ 📍 *Manzil:* Toshkent shahri\n"
-        "└─────────────────────\n\n"
-        "📧 *Email:* support@example.com\n"
-        "🌐 *Website:* www.example.com",
-        parse_mode="Markdown",
-        disable_web_page_preview=True
-    )
+    text = """
+📞 *BIZ BILAN BOG'LANISH*
 
-# ==================== MUKAMMAL HELP KOMMANDASI ====================
+┌─────────────────────
+│ 👤 *Admin:* @bbm1311
+│ 📱 *Telefon:* +998 95 818 27 28
+├─────────────────────
+│ 👨‍💻 *Dasturchi:* @prodevuzoff
+│ 📱 *Telefon:* +998 91 861 04 70
+├─────────────────────
+│ ⏰ *Ish vaqti:* 09:00 - 22:00
+│ 📍 *Manzil:* Toshkent shahri
+└─────────────────────
+
+📧 *Email:* support@example.com
+🌐 *Website:* www.example.com
+
+Savollar bo'lsa, bemalol murojaat qiling!
+    """
+    
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔙 Asosiy menyu", callback_data="back_to_main")]
+    ])
+    
+    if isinstance(event, types.Message):
+        await event.answer(text, parse_mode="Markdown", reply_markup=kb)
+    else:
+        await event.message.edit_text(text, parse_mode="Markdown", reply_markup=kb)
+        await event.answer()
+
 @router.message(Command("help"))
-async def cmd_help(message: types.Message):
-    """Foydalanuvchi va adminlar uchun to'liq yordam xabari"""
+@router.callback_query(F.data == "help")
+async def cmd_help(event: types.Message or types.CallbackQuery):
+    """Yordam komandasi"""
+    is_admin = False
+    user_id = event.from_user.id if isinstance(event, types.Message) else event.from_user.id
+    
+    if isinstance(event, types.CallbackQuery):
+        user_id = event.from_user.id
+    
+    is_admin = user_id in ADMIN_IDS or user_id in ALL_OWNER_IDS
+    
+    help_text = """
+🆘 *YORDAM BO'LIMI* 🆘
+
+📌 *ASOSIY BUYRUQLAR:*
+• /start - Botni ishga tushirish
+• /help - Yordam oynasi
+• /profile - Profil ma'lumotlari
+• /info - Bog'lanish ma'lumotlari
+
+👥 *REFERAL TIZIM:*
+• /tree - Referal daraxti (matn)
+• /treeimg - Referal daraxti (rasm)
+• /downline - Avlodlar soni
+• /me - To'liq profil
+• /balance - Balansni ko'rish
+• /withdraw [summa] - Pul yechish
+• /transactions - Tranzaksiyalar
+
+🛒 *BUYURTMA TIZIMI:*
+1. Katalog → Mahsulot tanlash
+2. Miqdorni belgilash
+3. Savatga qo'shish
+4. Buyurtma berish
+
+📝 *Maxsus buyurtma formati:*
+`Mahsulot - miqdor birlik`
+Misol: `Olma - 2 kg`
+
+✅ *Telefon raqam* bir marta so'raladi
+📍 *Lokatsiya* har bir buyurtmada so'raladi
+    """
+    
+    if is_admin:
+        help_text += """
+        
+👑 *ADMIN BUYRUGLARI:*
+• /orders - Buyurtmalarni boshqarish
+• /setrole [id] [rol] - Rol o'zgartirish
+• /users - Foydalanuvchilar ro'yxati
+• /withdraw_requests - Pul so'rovlari
+• /confirm_withdraw [id] - Tasdiqlash
+• /decline_withdraw [id] - Rad etish
+• /export_withdraws - CSV eksport
+• /maintenance_on - Texnik rejim
+• /maintenance_off - Texnik rejim o'chirish
+• /log - Log faylini olish
+        """
+    
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔙 Asosiy menyu", callback_data="back_to_main")]
+    ])
+    
+    if isinstance(event, types.Message):
+        await event.answer(help_text, parse_mode="Markdown", reply_markup=kb)
+    else:
+        await event.message.edit_text(help_text, parse_mode="Markdown", reply_markup=kb)
+        await event.answer()
+
+@router.callback_query(F.data == "back_to_main")
+async def back_to_main(callback: types.CallbackQuery):
+    """Asosiy menyuga qaytish"""
+    is_admin = callback.from_user.id in ADMIN_IDS or callback.from_user.id in ALL_OWNER_IDS
+    
+    text = "🌟 *Asosiy menyu* 🌟\n\nKerakli bo'limni tanlang:"
+    
+    kb = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🛍 Katalog", callback_data="show_catalog")],
+        [InlineKeyboardButton(text="📝 Maxsus buyurtma", callback_data="custom_order")],
+        [InlineKeyboardButton(text="🛒 Savat", callback_data="view_cart")],
+        [InlineKeyboardButton(text="👤 Profil", callback_data="view_profile")],
+        [InlineKeyboardButton(text="📞 Bog'lanish", callback_data="contact_info")],
+        [InlineKeyboardButton(text="❓ Yordam", callback_data="help")]
+    ])
+    
     try:
-        # Foydalanuvchi admin yoki owner ekanligini tekshirish
-        is_admin = message.from_user.id in ADMIN_IDS or message.from_user.id in ALL_OWNER_IDS
-        
-        # Asosiy yordam matni
-        help_text = "🆘 *YORDAM BO'LIMI* 🆘\n\n"
-        
-        # ========== ASOSIY BUYRUQLAR ==========
-        help_text += "📌 *ASOSIY BUYRUQLAR:*\n"
-        help_text += "┌─────────────────────────────────\n"
-        help_text += "│ 🔹 `/start` - Botni ishga tushirish\n"
-        help_text += "│ 🔹 `/help` - Yordam oynasi\n"
-        help_text += "│ 🔹 `/profile` - Profil ma'lumotlari\n"
-        help_text += "│ 🔹 `/info` - Bog'lanish ma'lumotlari\n"
-        help_text += "└─────────────────────────────────\n\n"
-        
-        # ========== REFERAL TIZIM ==========
-        help_text += "👥 *REFERAL TIZIM:*\n"
-        help_text += "┌─────────────────────────────────\n"
-        help_text += "│ 🌳 `/tree` - Referal daraxti (matn)\n"
-        help_text += "│ 🖼 `/treeimg` - Referal daraxti (rasm)\n"
-        help_text += "│ 📊 `/downline` - Avlodlar soni\n"
-        help_text += "│ 👤 `/me` - To'liq profil\n"
-        help_text += "│ 💰 `/balance` - Balansni ko'rish\n"
-        help_text += "│ 💸 `/withdraw [summa]` - Pul yechish\n"
-        help_text += "│ 📜 `/transactions` - Tranzaksiyalar\n"
-        help_text += "└─────────────────────────────────\n\n"
-        
-        # ========== BUYURTMA TIZIMI ==========
-        help_text += "🛒 *BUYURTMA TIZIMI:*\n"
-        help_text += "┌─────────────────────────────────\n"
-        help_text += "│ 📦 *Oddiy buyurtma:*\n"
-        help_text += "│   1. Katalog → Mahsulot tanlash\n"
-        help_text += "│   2. Miqdorni belgilash\n"
-        help_text += "│   3. Savatga qo'shish\n"
-        help_text += "│   4. Savat → Buyurtma berish\n"
-        help_text += "│\n"
-        help_text += "│ 📝 *Maxsus buyurtma:*\n"
-        help_text += "│   Format: `Mahsulot - miqdor birlik`\n"
-        help_text += "│   Masalan: `Olma - 2 kg`\n"
-        help_text += "│   \n"
-        help_text += "│   *Qabul qilinadigan birliklar:*\n"
-        help_text += "│   • kg, gramm, tonna\n"
-        help_text += "│   • litr, ml\n"
-        help_text += "│   • metr, sm\n"
-        help_text += "│   • dona, juft, quti\n"
-        help_text += "└─────────────────────────────────\n\n"
-        
-        # ========== FAQAT ADMINLAR UCHUN ==========
-        if is_admin:
-            help_text += "👑 *ADMIN BUYRUGLARI:*\n"
-            help_text += "┌─────────────────────────────────\n"
-            help_text += "│ 📋 `/orders` - Buyurtmalarni boshqarish\n"
-            help_text += "│ 🔐 `/setrole [id] [rol]` - Rol o'zgartirish\n"
-            help_text += "│ 👥 `/users` - Foydalanuvchilar ro'yxati\n"
-            help_text += "│\n"
-            help_text += "│ 💰 *Pul yechish so'rovlari:*\n"
-            help_text += "│   🔹 `/withdraw_requests` - So'rovlar\n"
-            help_text += "│   🔹 `/confirm_withdraw [id]` - Tasdiqlash\n"
-            help_text += "│   🔹 `/decline_withdraw [id]` - Rad etish\n"
-            help_text += "│   🔹 `/export_withdraws` - Eksport CSV\n"
-            help_text += "│   🔹 `/manual_payout [id] [summa]` - To'lov\n"
-            help_text += "│\n"
-            help_text += "│ 🛠 *Texnik buyruqlar:*\n"
-            help_text += "│   🔹 `/maintenance_on` - Texnik rejim yoqish\n"
-            help_text += "│   🔹 `/maintenance_off` - Texnik rejim o'chirish\n"
-            help_text += "│   🔹 `/set_webhook` - Webhook o'rnatish\n"
-            help_text += "│   🔹 `/delete_webhook` - Webhook o'chirish\n"
-            help_text += "│   🔹 `/webhook_info` - Webhook ma'lumoti\n"
-            help_text += "│   🔹 `/log` - Log faylini olish\n"
-            help_text += "└─────────────────────────────────\n\n"
-        
-        # ========== QO'SHIMCHA MA'LUMOTLAR ==========
-        help_text += "ℹ️ *QO'SHIMCHA MA'LUMOT:*\n"
-        help_text += "┌─────────────────────────────────\n"
-        help_text += "│ ✅ Telefon raqam bir marta so'raladi\n"
-        help_text += "│ 📍 Lokatsiya har bir buyurtmada so'raladi\n"
-        help_text += "│ 💾 Barcha ma'lumotlar xavfsiz saqlanadi\n"
-        help_text += "│ 📞 Muammo bo'lsa /info orqali bog'lan\n"
-        help_text += "└─────────────────────────────────\n\n"
-        
-        # ========== BOT VERSIYASI ==========
-        help_text += "┌─────────────────────────────────\n"
-        help_text += "│ 🤖 *Bot versiyasi:* 2.0.0\n"
-        help_text += "│ 📅 *Yangilangan:* 2026-02-24\n"
-        help_text += "│ 👨‍💻 *Dasturchi:* @prodevuzoff\n"
-        help_text += "└─────────────────────────────────\n"
-        
-        # Adminlar uchun qisqa eslatma
-        if is_admin:
-            help_text += "\n📢 *Admin eslatmasi:* Barcha admin buyruqlari faqat adminlar uchun!"
-        
-        await message.answer(help_text, parse_mode="Markdown")
-        logger.info(f"Foydalanuvchi {message.from_user.id} help buyrug'ini ishlatdi")
-        
-    except Exception as e:
-        logger.error(f"Help komandasida xato: {e}")
-        await message.answer("❌ Yordam oynasini yuklashda xatolik yuz berdi.")
+        await callback.message.delete()
+        await callback.message.answer(text, parse_mode="Markdown", reply_markup=kb)
+    except:
+        await callback.message.edit_text(text, parse_mode="Markdown", reply_markup=kb)
+    
+    await callback.answer()
+
+@router.callback_query(F.data == "show_catalog")
+async def show_catalog_callback(callback: types.CallbackQuery):
+    """Katalogga o'tish"""
+    from bot.handlers.catalog import show_categories
+    await show_categories(callback.message)
+    await callback.answer()

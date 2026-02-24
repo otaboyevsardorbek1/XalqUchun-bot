@@ -1,10 +1,13 @@
+# bot/middlewares/maintenance.py
 from aiogram import BaseMiddleware, types
 from aiogram.types import Message
 import logging
+from bot.data import ADMIN_IDS, OWNER_ID
 
 logger = logging.getLogger(__name__)
 
-MAINTENANCE_MODE = False  # Global flag
+# Global flag - bu o'zgaruvchi admin_settings orqali o'zgartiriladi
+MAINTENANCE_MODE = False
 
 class MaintenanceMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
@@ -13,10 +16,27 @@ class MaintenanceMiddleware(BaseMiddleware):
 
         if isinstance(event, Message):
             user_id = event.from_user.id
-            # Allow admins and owner to bypass
-            from bot.data import ADMIN_IDS, OWNER_ID
+            # Admin va ownerga ruxsat
             if user_id in ADMIN_IDS or user_id == OWNER_ID:
                 return await handler(event, data)
-            await event.answer("🛠 Texnik ishlar olib borilmoqda. Keyinroq urinib ko'ring.")
+            
+            await event.answer(
+                "🛠 *Texnik ishlar olib borilmoqda*\n\n"
+                "Bot vaqtincha ishlamaydi. Keyinroq urinib ko'ring.\n\n"
+                "⏳ Taxminiy vaqt: 10-15 daqiqa",
+                parse_mode="Markdown"
+            )
             return None
-        return None  # Block all other events during maintenance
+        
+        elif isinstance(event, types.CallbackQuery):
+            user_id = event.from_user.id
+            if user_id in ADMIN_IDS or user_id == OWNER_ID:
+                return await handler(event, data)
+            
+            await event.answer(
+                "🛠 Texnik ishlar olib borilmoqda",
+                show_alert=True
+            )
+            return None
+        
+        return None
