@@ -175,3 +175,5 @@ bot.db
 CodeAnalyzer_respons
 database.sqlite3
 database.sqlite3-journal
+
+user_carts.json
