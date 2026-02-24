@@ -172,14 +172,12 @@ async def product_detail(callback: CallbackQuery, state: FSMContext):
             )
         
         price_str = format_price(product.price)
-        text = f"""
-📦 *{product.name}*
-
-💰 *Narxi:* {price_str} so'm
-📝 *Ta'rif:* {product.description or 'Ta\'rif mavjud emas'}
-
-🔢 *Miqdorni tanlang:*
-        """
+        text = (
+            f"📦 *{product.name}*\n\n"
+            f"💰 *Narxi:* {price_str} so'm\n"
+            f"📝 *Ta'rif:* {product.description or 'Tarif mavjud emas'}\n\n"
+            f"🔢 *Miqdorni tanlang:*"
+        )
         
         await callback.message.edit_text(
             text,
@@ -797,3 +795,43 @@ async def custom_retry_all(callback: CallbackQuery, state: FSMContext):
     except Exception as e:
         logger.error(f"Qayta boshlashda xato: {e}")
         await callback.answer("❌ Xatolik", show_alert=True)
+
+#================================================================================
+# add new funqtions for cart keyboard here
+
+# bot/keyboards/cart.py
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from typing import Dict, Any, List
+
+def cart_kb(cart_items: List[Dict[str, Any]]) -> InlineKeyboardMarkup:
+    """Savat tugmalari"""
+    builder = InlineKeyboardBuilder()
+    
+    for item in cart_items:
+        if item['type'] == 'regular':
+            text = f"❌ {item['name']} ({item['qty']} dona)"
+        else:
+            text = f"❌ {item['name']} ({item['qty']} {item['unit']})"
+        
+        builder.button(text=text, callback_data=f"remove_{item['id']}")
+    
+    builder.button(text="✅ Buyurtma berish", callback_data="checkout")
+    builder.button(text="🔄 Savatni tozalash", callback_data="clear_cart")
+    builder.button(text="🔙 Orqaga", callback_data="back_to_main")
+    
+    builder.adjust(1)
+    return builder.as_markup()
+
+def edit_custom_item_kb(custom_id: int) -> InlineKeyboardMarkup:
+    """Maxsus mahsulotni tahrirlash tugmalari"""
+    builder = InlineKeyboardBuilder()
+    
+    builder.row(
+        InlineKeyboardButton(text="🗑 O'chirish", callback_data=f"edit_delete_{custom_id}"),
+        InlineKeyboardButton(text="✏️ Miqdorni o'zgartirish", callback_data=f"edit_qty_{custom_id}")
+    )
+    
+    builder.row(InlineKeyboardButton(text="🔙 Orqaga", callback_data="back_to_cart"))
+    
+    return builder.as_markup()
