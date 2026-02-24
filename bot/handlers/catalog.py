@@ -172,14 +172,11 @@ async def product_detail(callback: CallbackQuery, state: FSMContext):
             )
         
         price_str = format_price(product.price)
-        text = f"""
-📦 *{product.name}*
-
-💰 *Narxi:* {price_str} so'm
-📝 *Ta'rif:* {product.description or 'Ta\'rif mavjud emas'}
-
-🔢 *Miqdorni tanlang:*
-        """
+        #abrazis
+        text = f"📦 *{product.name}*\n\n"
+        text += f"💰 *Narxi:* {price_str} so'm\n"
+        text += f"📝 *Ta'rif:* {product.description or 'Tarif mavjud emas'}\n\n"
+        text += f"🔢 *Miqdorni tanlang:*"
         
         await callback.message.edit_text(
             text,

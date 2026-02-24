@@ -7,7 +7,7 @@ from sqlalchemy import select
 import re
 from bot.keyboards.main import get_main_menu, get_back_button
 from typing import Union
-from aiogram.types import Message, CallbackQu
+from aiogram.types import Message, CallbackQuery
 from bot.keyboards.cart import cart_kb, edit_custom_item_kb
 from bot.db.database import AsyncSessionLocal
 from bot.db.models import Product
@@ -177,14 +177,12 @@ async def edit_custom_item(callback: CallbackQuery, state: FSMContext):
             edit_item_qty=item['qty']
         )
         
-        text = f"""
-✏️ *MAHSULOTNI TAHRIRLASH*
-
-📦 *Mahsulot:* {item['name']}
-📊 *Hozirgi miqdor:* {item['qty']} {item['unit']}
-
-Nima qilmoqchisiz?
-        """
+        text = (
+            f"✏️ *MAHSULOTNI TAHRIRLASH*\n\n"
+            f"📦 *Mahsulot:* {item['name']}\n"
+            f"📊 *Hozirgi miqdor:* {item['qty']} {item['unit']}\n\n"
+            "Nima qilmoqchisiz?)"
+            )
         
         await callback.message.edit_text(
             text,
