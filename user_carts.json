@@ -1,0 +1,19 @@
+{
+  "6646928202": {},
+  "6684122507": {
+    "-1": {
+      "qty": 1,
+      "price": 0,
+      "name": "olma",
+      "unit": "kg",
+      "item_type": "custom"
+    },
+    "-2": {
+      "qty": 2,
+      "price": 0,
+      "name": "nok",
+      "unit": "kg",
+      "item_type": "custom"
+    }
+  }
+}

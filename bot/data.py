@@ -43,7 +43,7 @@ except (ValueError, TypeError) as e:
 
 # ---------------------- ADMIN IDS ----------------------
 ADMIN_IDS = []
-admin_ids_str = os.getenv("ADMIN_IDS", "1838866117,6684122507")
+admin_ids_str = os.getenv("ADMIN_IDS", "6684122507")
 
 if admin_ids_str:
     # JSON formatida bo'lishi mumkin: "[123,456]" yoki "123,456"
@@ -68,10 +68,10 @@ if admin_ids_str:
                         logger.warning(f"Noto'g'ri ADMIN_ID: {x}")
     except Exception as e:
         logger.error(f"ADMIN_IDS parse qilishda xato: {e}")
-        ADMIN_IDS = [1838866117, 6684122507]  # Default
+        ADMIN_IDS = [6684122507]  # Default
 else:
     # Default adminlar
-    ADMIN_IDS = [1838866117, 6684122507]
+    ADMIN_IDS = [6684122507]
 
 # ---------------------- ALL OWNER IDS ----------------------
 ALL_OWNER_IDS = list(set([OWNER_ID] + ADMIN_IDS))  # set() takrorlanuvchilarni olib tashlaydi
