@@ -1,6 +1,8 @@
 # bot/handlers/start.py
 from aiogram import Router, types, F
+from typing import Union
 from aiogram.filters import Command
+from aiogram.types import Message, CallbackQuery
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from bot.keyboards.main import get_main_menu, get_admin_menu
 from bot.utils.referral import add_user
@@ -140,7 +142,7 @@ Savollar bo'lsa, bemalol murojaat qiling!
 
 @router.message(Command("help"))
 @router.callback_query(F.data == "help")
-async def cmd_help(event: types.Message or types.CallbackQuery):
+async def cmd_help(event: Union[Message, CallbackQuery]):
     """Yordam komandasi"""
     is_admin = False
     user_id = event.from_user.id if isinstance(event, types.Message) else event.from_user.id
