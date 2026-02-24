@@ -73,9 +73,6 @@ dp.message.middleware(RoleAccessMiddleware())
 dp.callback_query.middleware(ErrorReporterMiddleware(bot, ADMIN_IDS + [OWNER_ID]))
 dp.callback_query.middleware(MaintenanceMiddleware())
 dp.callback_query.middleware(RoleAccessMiddleware())
-# Bu qatorlarni olib tashlang (chunki ular yuqorida qo'shilgan)
-# dp.message.middleware(ChatActionMiddleware())  # Yangi middleware
-# dp.callback_query.middleware(ChatActionMiddleware())  # Yangi middleware
 
 async def on_startup():
     """Bot ishga tushganda bajariladigan funksiyalar"""
@@ -113,7 +110,7 @@ async def on_startup():
         
         # 3. Adminlarni xabardor qilish
         logger.info("3. Adminlar xabardor qilinmoqda...")
-        await notify_admins_startup(bot,ALL_OWNER_IDS)
+        await notify_admins_startup(bot)
         logger.info("✅ Adminlar xabardor qilindi")
         
         # 4. Log faylini tekshirish
@@ -147,7 +144,7 @@ async def on_shutdown():
     try:
         # 1. Adminlarni xabardor qilish
         logger.info("1. Adminlar xabardor qilinmoqda...")
-        await notify_admins_shutdown(bot, ADMIN_IDS + [OWNER_ID])
+        await notify_admins_shutdown(bot)
         logger.info("✅ Adminlar xabardor qilindi")
         
         # 2. Bot sessionni yopish

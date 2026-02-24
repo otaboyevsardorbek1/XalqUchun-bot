@@ -4,8 +4,8 @@ from aiogram import Bot
 from typing import List  # add import
 
 logger = logging.getLogger(__name__)
-
-async def notify_admins_startup(bot: Bot, ALL_OWNER_IDS: List[int]):  # changed
+from bot.data import ALL_OWNER_IDS  # add import
+async def notify_admins_startup(bot: Bot):  # changed
     date_now = time.strftime("%Y-%m-%d")
     time_now = time.strftime("%H:%M:%S")
     for admin in ALL_OWNER_IDS:
@@ -18,7 +18,7 @@ async def notify_admins_startup(bot: Bot, ALL_OWNER_IDS: List[int]):  # changed
         except Exception as e:
             logger.error(f"Failed to notify admin {admin}: {e}")
 
-async def notify_admins_shutdown(bot: Bot, ALL_OWNER_IDS: List[int]):  # changed
+async def notify_admins_shutdown(bot: Bot):  # changed
     date_now = time.strftime("%Y-%m-%d")
     time_now = time.strftime("%H:%M:%S")
     for admin in ALL_OWNER_IDS:
