@@ -179,7 +179,6 @@ async def main():
         logger.error(f"❌ Polling xatosi: {e}", exc_info=True)
         raise
     finally:
-        # Har holda bot sessionni yopish
         await bot.session.close()
         await engine.dispose()
 
