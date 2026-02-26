@@ -356,7 +356,7 @@ async def order_action(callback: CallbackQuery, state: FSMContext):
 async def courier_phone_received(message: types.Message, state: FSMContext):
     """Kuryer telefon raqamini qabul qilish"""
     try:
-        from bot.utils.helpers import validate_uz_phone
+        from bot.utils.helpers import validate_uz_phone, format_phone_for_display
         
         phone = message.text.strip()
         is_valid, cleaned = validate_uz_phone(phone)
@@ -372,6 +372,7 @@ async def courier_phone_received(message: types.Message, state: FSMContext):
         data = await state.get_data()
         order_id = data['order_id']
         
+        # AsyncSession ni to'g'ri ishlatish
         async with AsyncSessionLocal() as session:
             order = await session.get(Order, order_id)
             if order:
@@ -388,8 +389,8 @@ async def courier_phone_received(message: types.Message, state: FSMContext):
                             f"U bilan bog'lanib, yetib kelish vaqtini bilib oling.",
                             parse_mode="Markdown"
                         )
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.error(f"Foydalanuvchiga xabar yuborishda xato: {e}")
         
         await message.answer(
             f"✅ Buyurtma tayyor deb belgilandi va foydalanuvchiga xabar yuborildi.\n\n"
