@@ -121,11 +121,10 @@ async def contact_info(event:types.CallbackQuery):
 │ 📱 *Telefon:* +998 91 861 04 70
 ├─────────────────────
 │ ⏰ *Ish vaqti:* 09:00 - 22:00
-│ 📍 *Manzil:* Toshkent shahri
+│ 📍 *Manzil:* Namangan viloyati 
 └─────────────────────
 
-📧 *Email:* support@example.com
-🌐 *Website:* www.example.com
+🌐 *Website:* https://sost.uz/
 
 Savollar bo'lsa, bemalol murojaat qiling!
     """
